@@ -13,19 +13,22 @@ namespace ElevenDb
         RecordCreateError,
         DbNotFound,
         TreeReadSuccess,
-        RecordFound
+        RecordFound,
+        DbCreateError,
+        TreeReadFailure,
+        UnknownFailure,
+        RecordReadSuccess,
+        RecordReadFailure,
+        RecordNotFound
     }
-    public class Result
+    public class Result<T>
     {
-        internal Record Record;
         public ResultType Message { get; set; }
-        public string Value
+
+        internal T Data;
+        public Result(T Data,ResultType Message)
         {
-            get { return Record.Value; }
-        }
-        public Result(Record Record,ResultType Message)
-        {
-            this.Record = Record;
+            this.Data = Data;
             this.Message = Message;
         }
     }
