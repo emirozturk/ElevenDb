@@ -10,5 +10,9 @@
         public static string TreeReadSuccess { get; internal set; }
         public static string RecordReadFailure { get; internal set; }
         public static string RecordNotFound { get; internal set; }
+        public static string StorageWriteError { get; internal set; }
+        public static string Success { get; internal set; }
+        public static string TreeInsertionFailure { get; internal set; }
+        public static string TreeInsertionSuccess { get; internal set; }
     }
 }

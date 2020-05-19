@@ -7,7 +7,15 @@ namespace ElevenDb
 {
     class Storage
     {
+        string DbPath;
         static int RecordSizeInKb;
+        const int KB = 1024;
+        FileStream fs;
+        internal Storage(string DbPath)
+        {
+            this.DbPath = DbPath;
+            fs = new FileStream(DbPath, FileMode.Open);
+        }
         internal static Result<string> DbExists(string dbPath)
         {
             if (File.Exists(dbPath))
@@ -16,38 +24,54 @@ namespace ElevenDb
                 return new Result<string>(Messages.DbNotFound, ResultType.DbNotFound);
         }
 
-        internal static Result LoadDb(string dbPath)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal static Result CreateDb(string dbPath, Options options)
+        internal static Result<string> CreateDb(string dbPath, Options options)
         {
             try
             {
                 File.Create(dbPath);
                 RecordSizeInKb = options.RecordSizeinKb;
-                return new Result(null, ResultType.Success);
+                return new Result<string>(Messages.Success, ResultType.Success);
             }
             catch
             {
-                return new Result(null, ResultType.DbCreateError);
+                return new Result<string>(Messages.Success, ResultType.DbCreateFailure);
             }
         }
 
-        internal static Result Write(Record value)
+        internal Result<Record> ReadRecord(int BlockNumber)
+        {
+            if(BlockNumber == 0)
+            {
+                byte[] treeBlock = new byte[1024 * KB];
+                fs.Read(treeBlock, 0, 1024 * KB);
+                Block b = new Block(treeBlock);
+            }
+            else
+            {
+
+            }
+        }
+        internal void WriteRecord(int BlockNumber)
+        {
+            if(BlockNumber == 0)
+            {
+
+            }
+        }
+
+        internal Result<int> WriteRecord(Record record)
         {
             throw new NotImplementedException();
         }
 
-        internal static Result ReadRecord(int RecordNumber)
+        internal Result<string> UpdateRecord(Record record)
         {
             throw new NotImplementedException();
         }
 
-        internal static Result ReadTree()
+        internal void Close()
         {
-            throw new NotImplementedException();
+            fs.Close();
         }
     }
 }

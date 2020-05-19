@@ -4,6 +4,13 @@ namespace ElevenDb
 {
     public class Record
     {
+
+        public Record(string Key)
+        {
+            this.Key = Key;
+            Value = "";
+        }
+
         public Record(string key, string value)
         {
             Key = key;

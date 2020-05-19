@@ -10,23 +10,24 @@ namespace ElevenDb
         NotFound,
         Overwritten,
         DbExists,
-        RecordCreateError,
+        RecordCreateFailure,
         DbNotFound,
-        TreeReadSuccess,
-        RecordFound,
-        DbCreateError,
+        DbCreateFailure,
         TreeReadFailure,
         UnknownFailure,
-        RecordReadSuccess,
         RecordReadFailure,
-        RecordNotFound
+        RecordNotFound,
+        KeyFound,
+        KeyNotFound,
+        StorageWriteFailure,
+        TreeInsertionFailure,
     }
     public class Result<T>
     {
         public ResultType Message { get; set; }
 
-        internal T Data;
-        public Result(T Data,ResultType Message)
+        public T Data { get; set; }
+        public Result(T Data, ResultType Message)
         {
             this.Data = Data;
             this.Message = Message;
