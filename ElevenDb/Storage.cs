@@ -14,9 +14,10 @@ namespace ElevenDb
         const int KB = 1024;
         readonly FileStream fs;
 
-        internal Storage(string DbPath)
+        internal Storage(string DbPath, Options options)
         {
             fs = new FileStream(DbPath, FileMode.Open);
+            BlockSize = options.BlockSizeinKb * KB;
         }
         internal static Result<string> DbExists(string dbPath)
         {
@@ -26,45 +27,32 @@ namespace ElevenDb
                 return new Result<string>(Messages.DbNotFound, ResultType.DbNotFound);
         }
 
-        internal static Result<string> CreateDb(string dbPath, Options options)
+        internal static Result<string> CreateDb(string dbPath)
         {
             try
             {
-                File.Create(dbPath);
-                BlockSize = options.BlockSizeinKb * KB;
-                return new Result<string>(Messages.Success, ResultType.Success);
+                File.Create(dbPath).Close();
+                return new Result<string>(Messages.DbCreateSuccess, ResultType.Success);
             }
             catch
             {
-                return new Result<string>(Messages.Success, ResultType.DbCreateFailure);
+                return new Result<string>(Messages.DbCreateFailure, ResultType.DbCreateFailure);
             }
         }
 
         internal Result<Record> ReadRecord(int BlockNumber)
         {
             fs.Position = 0;
-            Record r;
-            if (BlockNumber == 0)
+            List<Block> blockList = new List<Block>();
+            byte[] block = new byte[BlockSize];
+            do
             {
-                byte[] treeBlock = new byte[1024 * KB];
-                fs.Read(treeBlock, 0, 1024 * KB);
-                Block b = new Block(treeBlock);
-                r = BlockListToRecord(new List<Block> { b });
-                return new Result<Record>(r, ResultType.Success);
-            }
-            else
-            {
-                List<Block> blockList = new List<Block>();
-                byte[] block = new byte[BlockSize];
-                do
-                {
-                    fs.Read(block, BlockNumber * BlockSize, 1);
-                    Block b = new Block(block);
-                    blockList.Add(b);
-                    BlockNumber = b.NextBlock;
-                } while (BlockNumber != -1);
-                r = BlockListToRecord(blockList);
-            }
+                fs.Read(block, BlockNumber * BlockSize, BlockSize);
+                Block b = new Block(block);
+                blockList.Add(b);
+                BlockNumber = b.NextBlock;
+            } while (BlockNumber != -1);
+            Record r = BlockListToRecord(blockList);
             return new Result<Record>(r, ResultType.Success);
         }
 
@@ -79,16 +67,10 @@ namespace ElevenDb
         internal void WriteBlock(int BlockNumber, byte[] value)
         {
             fs.Position = 0;
-            if (BlockNumber == 0)
-            {
-                byte[] tree = new byte[KB * KB];
-                value.CopyTo(tree, 0);
-                fs.Write(tree, 0, tree.Length);
-            }
-            else
-            {
-                fs.Write(value, BlockSize * BlockNumber, BlockSize);
-            }
+            BinaryWriter bw = new BinaryWriter(fs);
+            bw.Seek(KB * KB + BlockNumber* BlockSize, SeekOrigin.Begin);
+            bw.Write(value);
+            bw.Close();
         }
 
         internal Result<int> WriteRecord(Record record)
@@ -110,10 +92,10 @@ namespace ElevenDb
             int offset = KB * KB;
             int blockNumber = 1;
             byte[] block = new byte[BlockSize];
-            fs.Read(new byte[offset], 0, 1);
-            while (fs.CanRead)
+            fs.Read(new byte[offset], 0, offset);
+            while (fs.Position < fs.Length)
             {
-                fs.Read(block, 0, 1);
+                fs.Read(block, 0, block.Length);
                 if (Convert.ToBoolean(new Block(block).IsDeleted))
                     emptyBlocks.Add(blockNumber++);
             }
@@ -129,11 +111,27 @@ namespace ElevenDb
             List<Block> blockList = new List<Block>();
             int blockCount = data.Length / (BlockSize - 1 - sizeof(int)) + 1;
             for (int i = 0; i < blockCount; i++)
-                blockList.Add(new Block(0, data.Skip(i * BlockSize).Take(BlockSize).ToArray(), -1));
+            {
+                byte[] block = new byte[BlockSize];
+                byte[] blockData = data.Skip(i * BlockSize).Take(BlockSize).ToArray();
+                blockData.CopyTo(block, 0);
+                blockList.Add(new Block(0, block, -1));
+            }
             return blockList;
         }
 
-        internal Result<string> UpdateRecord(Record record)
+        internal Result<int> UpdateRecord(Record record,int blockNumber)
+        {
+            Result<string> result = DeleteRecord(blockNumber);
+            if(result.Message == ResultType.Success)
+            {
+                Result<int> intResult = WriteRecord(record);
+                return intResult;
+            }
+            return new Result<int>(-1, ResultType.RecordUpdateFailure);
+        }
+
+        private Result<string> DeleteRecord(int blockNumber)
         {
             throw new NotImplementedException();
         }

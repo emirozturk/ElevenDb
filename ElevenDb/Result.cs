@@ -17,10 +17,10 @@ namespace ElevenDb
         UnknownFailure,
         RecordReadFailure,
         RecordNotFound,
-        KeyFound,
         KeyNotFound,
         StorageWriteFailure,
         TreeInsertionFailure,
+        RecordUpdateFailure,
     }
     public class Result<T>
     {

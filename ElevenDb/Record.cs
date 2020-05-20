@@ -19,8 +19,8 @@ namespace ElevenDb
         {
             int keyLength = BitConverter.ToInt32(data.Take(sizeof(int)).ToArray());
             int valueLength = BitConverter.ToInt32(data.Skip(sizeof(int)).Take(sizeof(int)).ToArray());
-            Key = BitConverter.ToString(data.Skip(2 * sizeof(int)).Take(keyLength).ToArray());
-            Value = BitConverter.ToString(data.Skip(2 * sizeof(int) + keyLength).Take(valueLength).ToArray());
+            Key = Encoding.UTF8.GetString(data.Skip(2 * sizeof(int)).Take(keyLength).ToArray());
+            Value = Encoding.UTF8.GetString(data.Skip(2 * sizeof(int) + keyLength).Take(valueLength).ToArray());
         }
 
         public Record(string key, string value)
@@ -30,13 +30,12 @@ namespace ElevenDb
         }
         internal byte[] ToByteArray()
         {
-            byte[] keyBytes = Encoding.ASCII.GetBytes(Key);
-            byte[] valueBytes = Encoding.ASCII.GetBytes(Value);
-            byte[] result = new byte[0];
-            result.Concat(BitConverter.GetBytes(keyBytes.Length));
-            result.Concat(BitConverter.GetBytes(valueBytes.Length));
-            result.Concat(keyBytes);
-            result.Concat(valueBytes);
+            byte[] keyBytes = Encoding.UTF8.GetBytes(Key);
+            byte[] valueBytes = Encoding.UTF8.GetBytes(Value);
+            byte[] result = BitConverter.GetBytes(keyBytes.Length)
+            .Concat(BitConverter.GetBytes(valueBytes.Length))
+            .Concat(keyBytes)
+            .Concat(valueBytes).ToArray();
             return result;
         }
     }

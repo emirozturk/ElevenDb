@@ -1,10 +1,8 @@
 using NUnit.Framework;
 using ElevenDb;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
-namespace PicoTests
+namespace ElevenTests
 {
     public class Tests
     {
@@ -30,6 +28,7 @@ namespace PicoTests
                 Assert.Fail();
             database.Close();
         }
+        [Test]
         public void OverwriteTest()
         {
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
+using System.Text;
 
 namespace ElevenDb
 {
@@ -16,12 +17,12 @@ namespace ElevenDb
         public Node(string Key, int BlockNumber)
         {
             this.Key = Key;
-            this.BlockNumber = this.BlockNumber;
+            this.BlockNumber = BlockNumber;
         }
     }
     internal class BTree
     {
-        readonly Node Root;
+        Node Root;
         public BTree()
         {
 
@@ -34,6 +35,7 @@ namespace ElevenDb
 
         public override string ToString()
         {
+            if (Root == null) return String.Empty;
             string treeString = "";
             RootFirstTraverse(Root, ref treeString);
             return treeString;
@@ -41,9 +43,9 @@ namespace ElevenDb
 
         private void RootFirstTraverse(Node Current, ref string treeString)
         {
-            treeString += BitConverter.GetBytes(Current.Key.Length);
+            treeString += Encoding.UTF8.GetString(BitConverter.GetBytes(Current.Key.Length));
             treeString += Current.Key;
-            treeString += BitConverter.GetBytes(Current.BlockNumber);
+            treeString += Encoding.UTF8.GetString(BitConverter.GetBytes(Current.BlockNumber));
             RootFirstTraverse(Current.Left, ref treeString);
             RootFirstTraverse(Current.Right, ref treeString);
         }
@@ -59,7 +61,7 @@ namespace ElevenDb
         {
             List<Node> nodeList = new List<Node>();
             int index = 0;
-            int length = -1;
+            int length;
             while (index < treeString.Length)
             {
                 length = BitConverter.ToInt32(treeString.Substring(index, 4).Cast<byte>().ToArray());
@@ -79,8 +81,8 @@ namespace ElevenDb
         internal Result<int> GetBlockNumber(string Key)
         {
             int result = -1;
-            Search(Root, Key, ref result);
-            if (result == -1) return new Result<int>(-1, ResultType.RecordNotFound);
+            Search(ref Root, Key, ref result);
+            if (result == -1) return new Result<int>(-1, ResultType.KeyNotFound);
             else return new Result<int>(result, ResultType.Success);
         }
 
@@ -88,7 +90,7 @@ namespace ElevenDb
         {
             try
             {
-                Add(Root, Key, BlockNumber);
+                Add(ref Root, Key, BlockNumber);
                 return new Result<string>(Messages.TreeInsertionSuccess, ResultType.Success);
             }
             catch
@@ -96,18 +98,30 @@ namespace ElevenDb
                 return new Result<string>(Messages.TreeInsertionFailure, ResultType.TreeInsertionFailure);
             }
         }
-        private void Search(Node Current, string Key, ref int Result)
+
+        internal void UpdateRecord(string key, int data)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Search(ref Node Current, string Key, ref int Result)
         {
             if (Current == null) return;
             if (Key == Current.Key)
                 Result = Current.BlockNumber;
             else if (Key.CompareTo(Current.Key) > 0)
-                Search(Current.Right, Key, ref Result);
+            {
+                Node right = Current.Right;                
+                Search(ref right, Key, ref Result);
+            }
             else if (Key.CompareTo(Current.Key) < 0)
-                Search(Current.Left, Key, ref Result);
+            {
+                Node left = Current.Left;
+                Search(ref left, Key, ref Result);
+            }
         }
 
-        private void Add(Node Current, string Key, int BlockNumber)
+        private void Add(ref Node Current, string Key, int BlockNumber)
         {
             if (Current == null)
                 Current = new Node(Key, BlockNumber);
@@ -116,14 +130,20 @@ namespace ElevenDb
                 if (Current.Right == null)
                     Current.Right = new Node(Key, BlockNumber);
                 else
-                    Add(Current.Right, Key, BlockNumber);
+                {
+                    Node right = Current.Right;
+                    Add(ref right, Key, BlockNumber);
+                }
             }
             else if (Key.CompareTo(Current.Key) < 0)
             {
                 if (Current.Left == null)
                     Current.Left = new Node(Key, BlockNumber);
                 else
-                    Add(Current.Left, Key, BlockNumber);
+                {
+                    Node left = Current.Left;
+                    Add(ref left, Key, BlockNumber);
+                }
             }
         }
     }

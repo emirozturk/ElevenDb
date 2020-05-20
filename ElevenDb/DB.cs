@@ -26,11 +26,11 @@ namespace ElevenDb
             Result<string> result = Storage.DbExists(dbPath);
             if (result.Message == ResultType.DbExists)
             {
-                storage = new Storage(dbPath);
-                Result<Record> treeResult = storage.ReadRecord(0);
+                storage = new Storage(dbPath,options);
+                Result<string> treeResult = Read("ElevenTree000");
                 if (treeResult.Message == ResultType.Success)
                 {
-                    index = new BTree(treeResult.Data.Value);
+                    index = new BTree(treeResult.Data);
                     return new Result<string>(Messages.TreeReadSuccess, ResultType.Success);
                 }
                 else if (treeResult.Message == ResultType.TreeReadFailure)
@@ -40,9 +40,10 @@ namespace ElevenDb
             }
             else
             {
-                result = Storage.CreateDb(dbPath, options);
+                result = Storage.CreateDb(dbPath);
+                storage = new Storage(dbPath,options);
                 index = new BTree();
-                storage.WriteBlock(0,new Record("tree",index.ToString()).ToByteArray());
+                storage.WriteRecord(new Record("ElevenTree000",index.ToString()));
                 return result;
             }
         }
@@ -65,15 +66,21 @@ namespace ElevenDb
         public Result<string> Write(string Key, string Value)
         {
             Result<int> blockNumberResult = index.GetBlockNumber(Key);
-            if (blockNumberResult.Message == ResultType.KeyFound)
-                return storage.UpdateRecord(new Record(Key, Value));
+            if (blockNumberResult.Message == ResultType.Success)
+            {
+                Result<int> updateResult = storage.UpdateRecord(new Record(Key, Value), blockNumberResult.Data);
+                if(updateResult.Message == ResultType.Success)
+                {
+                    index.UpdateRecord(Key, updateResult.Data);
+                }
+            }
             else if (blockNumberResult.Message == ResultType.KeyNotFound)
             {
                 Result<int> newBlockNumberResult = storage.WriteRecord(new Record(Key, Value));
                 if (newBlockNumberResult.Message == ResultType.Success)
                 {
                     Result<String> result = index.AddRecord(Key, newBlockNumberResult.Data);
-                    storage.UpdateRecord(new Record("Tree",index.ToString()));
+                    storage.UpdateRecord(new Record("Tree",index.ToString()), newBlockNumberResult.Data);
                 }
                 else if (newBlockNumberResult.Message == ResultType.StorageWriteFailure)
                     return new Result<string>(Messages.StorageWriteError, ResultType.StorageWriteFailure);
