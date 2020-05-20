@@ -8,9 +8,9 @@ namespace ElevenDb
 {
     class Block
     {
-        byte IsDeleted { get; set; }
-        byte[] Data { get; set; }
-        int NextBlock { get; set; }
+        public byte IsDeleted { get; set; }
+        public byte[] Data { get; set; }
+        public int NextBlock { get; set; }
 
         public Block(byte[] ByteArray)
         {
@@ -20,7 +20,12 @@ namespace ElevenDb
             Buffer.BlockCopy(ByteArray, 1, Data, 0, DataSize);
             NextBlock = BitConverter.ToInt32(ByteArray, ByteArray.Length - sizeof(int));
         }
-
+        public Block(byte IsDeleted,byte[] Data,int NextBlock)
+        {
+            this.IsDeleted = IsDeleted;
+            this.Data = Data;
+            this.NextBlock = NextBlock;
+        }
         public byte[] GetAsByteArray()
         {
             return new byte[1] { IsDeleted }.Concat(Data).Concat(BitConverter.GetBytes(NextBlock)).ToArray();

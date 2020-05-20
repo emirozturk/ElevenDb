@@ -7,11 +7,10 @@ namespace ElevenDb
     public class Options
     {
         public byte BlockSizeinKb { get; set; }
-        public byte RecordSizeinKb { get; }
 
         public Options(byte BlockSizeinKb)
         {
-            this.BlockSizeinKb = RecordSizeinKb;
+            this.BlockSizeinKb = BlockSizeinKb;
         }
 
 

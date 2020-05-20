@@ -12,16 +12,16 @@ namespace ElevenDb
         internal Node Left { get; set; }
         internal Node Right { get; set; }
         internal string Key { get; set; }
-        internal int blockNumber { get; set; }
+        internal int BlockNumber { get; set; }
         public Node(string Key, int BlockNumber)
         {
             this.Key = Key;
-            this.blockNumber = blockNumber;
+            this.BlockNumber = this.BlockNumber;
         }
     }
     internal class BTree
     {
-        Node Root;
+        readonly Node Root;
         public BTree()
         {
 
@@ -43,7 +43,7 @@ namespace ElevenDb
         {
             treeString += BitConverter.GetBytes(Current.Key.Length);
             treeString += Current.Key;
-            treeString += BitConverter.GetBytes(Current.blockNumber);
+            treeString += BitConverter.GetBytes(Current.BlockNumber);
             RootFirstTraverse(Current.Left, ref treeString);
             RootFirstTraverse(Current.Right, ref treeString);
         }
@@ -52,7 +52,7 @@ namespace ElevenDb
         {
             List<Node> nodeList = StringToNodeList(treeString);
             foreach (var n in nodeList)
-                AddRecord(n.Key, n.blockNumber);
+                AddRecord(n.Key, n.BlockNumber);
         }
 
         private List<Node> StringToNodeList(string treeString)
@@ -100,7 +100,7 @@ namespace ElevenDb
         {
             if (Current == null) return;
             if (Key == Current.Key)
-                Result = Current.blockNumber;
+                Result = Current.BlockNumber;
             else if (Key.CompareTo(Current.Key) > 0)
                 Search(Current.Right, Key, ref Result);
             else if (Key.CompareTo(Current.Key) < 0)

@@ -67,6 +67,7 @@ namespace PicoTests
             database.Close();
 
         }
+        /*
         public void IterateTest()
         {
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");

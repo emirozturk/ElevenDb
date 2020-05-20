@@ -7,8 +7,8 @@ namespace ElevenDb
 {
     public class DB
     {
-        private string dbPath;
-        Options options;
+        readonly private string dbPath;
+        readonly Options options;
         BTree index;
         Storage storage;
         public DB(string Path)
@@ -42,7 +42,7 @@ namespace ElevenDb
             {
                 result = Storage.CreateDb(dbPath, options);
                 index = new BTree();
-                storage.WriteRecord(0);
+                storage.WriteBlock(0,new Record("tree",index.ToString()).ToByteArray());
                 return result;
             }
         }
@@ -85,7 +85,7 @@ namespace ElevenDb
         {
             storage.Close();
         }
-
+        /*
         public Iterator GetIterator()
         {
             throw new NotImplementedException();
