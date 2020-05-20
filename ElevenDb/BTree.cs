@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using System.Transactions;
 
 namespace ElevenDb
 {
@@ -43,6 +44,7 @@ namespace ElevenDb
 
         private void RootFirstTraverse(Node Current, ref string treeString)
         {
+            if (Current == null) return;
             treeString += Encoding.UTF8.GetString(BitConverter.GetBytes(Current.Key.Length));
             treeString += Current.Key;
             treeString += Encoding.UTF8.GetString(BitConverter.GetBytes(Current.BlockNumber));
@@ -64,14 +66,14 @@ namespace ElevenDb
             int length;
             while (index < treeString.Length)
             {
-                length = BitConverter.ToInt32(treeString.Substring(index, 4).Cast<byte>().ToArray());
-                index += 4;
+                length = BitConverter.ToInt32(Encoding.UTF8.GetBytes(treeString.Substring(index, sizeof(int))));
+                index += sizeof(int);
 
                 string key = treeString.Substring(index, length);
                 index += length;
 
-                int blockNumber = BitConverter.ToInt32(treeString.Substring(index, 4).Cast<byte>().ToArray());
-                index += 4;
+                int blockNumber = BitConverter.ToInt32(Encoding.UTF8.GetBytes(treeString.Substring(index, sizeof(int))));
+                index += sizeof(int);
 
                 nodeList.Add(new Node(key, blockNumber));
             }
@@ -80,10 +82,12 @@ namespace ElevenDb
 
         internal Result<int> GetBlockNumber(string Key)
         {
-            int result = -1;
+            Node result = new Node(Key, -1);
             Search(ref Root, Key, ref result);
-            if (result == -1) return new Result<int>(-1, ResultType.KeyNotFound);
-            else return new Result<int>(result, ResultType.Success);
+            if (result.BlockNumber == -1)
+                return new Result<int>(-1, ResultType.KeyNotFound);
+            else
+                return new Result<int>(result.BlockNumber, ResultType.Success);
         }
 
         internal Result<string> AddRecord(string Key, int BlockNumber)
@@ -99,19 +103,21 @@ namespace ElevenDb
             }
         }
 
-        internal void UpdateRecord(string key, int data)
+        internal void UpdateRecord(string Key, int BlockNumber)
         {
-            throw new NotImplementedException();
+            Node n = new Node(Key, -1);
+            Search(ref Root, Key, ref n);
+            n.BlockNumber = BlockNumber;
         }
 
-        private void Search(ref Node Current, string Key, ref int Result)
+        private void Search(ref Node Current, string Key, ref Node Result)
         {
             if (Current == null) return;
             if (Key == Current.Key)
-                Result = Current.BlockNumber;
+                Result = Current;
             else if (Key.CompareTo(Current.Key) > 0)
             {
-                Node right = Current.Right;                
+                Node right = Current.Right;
                 Search(ref right, Key, ref Result);
             }
             else if (Key.CompareTo(Current.Key) < 0)

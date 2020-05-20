@@ -21,6 +21,9 @@ namespace ElevenDb
         StorageWriteFailure,
         TreeInsertionFailure,
         RecordUpdateFailure,
+        BlockReadFailure,
+        BlockWriteFailure,
+        RecordWriteFailure,
     }
     public class Result<T>
     {

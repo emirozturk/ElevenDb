@@ -10,13 +10,14 @@ namespace ElevenDb
 {
     class Storage
     {
+        string DbPath;
         static int BlockSize;
         const int KB = 1024;
-        readonly FileStream fs;
+        FileStream fs;
 
         internal Storage(string DbPath, Options options)
         {
-            fs = new FileStream(DbPath, FileMode.Open);
+            this.DbPath = DbPath;
             BlockSize = options.BlockSizeinKb * KB;
         }
         internal static Result<string> DbExists(string dbPath)
@@ -32,98 +33,131 @@ namespace ElevenDb
             try
             {
                 File.Create(dbPath).Close();
-                return new Result<string>(Messages.DbCreateSuccess, ResultType.Success);
+                return new Result<string>(Messages.Success, ResultType.Success);
             }
-            catch
+            catch (Exception e)
             {
-                return new Result<string>(Messages.DbCreateFailure, ResultType.DbCreateFailure);
+                return new Result<string>(e.Message, ResultType.DbCreateFailure);
             }
         }
-
+        internal Result<List<Block>> ReadBlock(int BlockNumber)
+        {
+            try
+            {
+                fs = new FileStream(DbPath, FileMode.Open);
+                List<Block> blockList = new List<Block>();
+                byte[] block = new byte[BlockSize];
+                do
+                {
+                    fs.Position = BlockNumber * BlockSize;
+                    fs.Read(block, 0, BlockSize);
+                    Block b = new Block(block);
+                    blockList.Add(b);
+                    BlockNumber = b.NextBlock;
+                } while (BlockNumber != -1);
+                fs.Close();
+                return new Result<List<Block>>(blockList, ResultType.Success);
+            }
+            catch (Exception e)
+            {
+                fs.Close();
+                return new Result<List<Block>>(null, ResultType.BlockReadFailure);
+            }
+        }
         internal Result<Record> ReadRecord(int BlockNumber)
         {
-            fs.Position = 0;
-            List<Block> blockList = new List<Block>();
-            byte[] block = new byte[BlockSize];
-            do
+            var blockListResult = ReadBlock(BlockNumber);
+            if (blockListResult.Message == ResultType.Success)
             {
-                fs.Read(block, BlockNumber * BlockSize, BlockSize);
-                Block b = new Block(block);
-                blockList.Add(b);
-                BlockNumber = b.NextBlock;
-            } while (BlockNumber != -1);
-            Record r = BlockListToRecord(blockList);
-            return new Result<Record>(r, ResultType.Success);
+                Record r = BlockListToRecord(blockListResult.Data);
+                return new Result<Record>(r, ResultType.Success);
+            }
+            else
+                return new Result<Record>(null, ResultType.RecordReadFailure);
         }
 
         private Record BlockListToRecord(List<Block> blockList)
         {
             byte[] data = new byte[0];
             foreach (var block in blockList)
-                data.Concat(block.Data);
+                data = data.Concat(block.Data).ToArray();
             return new Record(data);
         }
 
-        internal void WriteBlock(int BlockNumber, byte[] value)
+        internal Result<string> WriteBlock(int BlockNumber, byte[] value)
         {
-            fs.Position = 0;
-            BinaryWriter bw = new BinaryWriter(fs);
-            bw.Seek(KB * KB + BlockNumber* BlockSize, SeekOrigin.Begin);
-            bw.Write(value);
-            bw.Close();
+            try
+            {
+                fs = new FileStream(DbPath,FileMode.Open);
+                BinaryWriter bw = new BinaryWriter(fs);
+                bw.Seek(BlockNumber * BlockSize, SeekOrigin.Begin);
+                bw.Write(value);
+                bw.Close();
+                return new Result<string>(Messages.Success, ResultType.Success);
+            }
+            catch (Exception e)
+            {
+                return new Result<string>(e.Message, ResultType.BlockWriteFailure);
+            }
         }
 
         internal Result<int> WriteRecord(Record record)
         {
-            byte[] data = record.ToByteArray();
-            List<Block> blockList = ByteArrayToBlockList(data);
-            List<int> emptyList = FindEmptyBlocks(blockList.Count);
-            for (int i = 0; i < blockList.Count - 1; i++)
-                blockList[i].NextBlock = emptyList[i + 1];
-            for (int i = 0; i < blockList.Count; i++)
-                WriteBlock(emptyList[i], blockList[i].GetAsByteArray());
-            return new Result<int>(emptyList[0], ResultType.Success);
+            try
+            {
+                byte[] data = record.ToByteArray();
+                List<Block> blockList = ByteArrayToBlockList(data);
+                List<int> emptyList = FindEmptyBlocks(blockList.Count);
+                for (int i = 0; i < blockList.Count - 1; i++)
+                    blockList[i].NextBlock = emptyList[i + 1];
+                for (int i = 0; i < blockList.Count; i++)
+                    WriteBlock(emptyList[i], blockList[i].GetAsByteArray());
+                return new Result<int>(emptyList[0], ResultType.Success);
+            }
+            catch (Exception e)
+            {
+                return new Result<int>(-1, ResultType.RecordWriteFailure);
+            }
         }
 
         private List<int> FindEmptyBlocks(int count)
         {
-            fs.Position = 0;
+            fs = new FileStream(DbPath, FileMode.Open);
             List<int> emptyBlocks = new List<int>();
-            int offset = KB * KB;
-            int blockNumber = 1;
+            int blockNumber = 0;
             byte[] block = new byte[BlockSize];
-            fs.Read(new byte[offset], 0, offset);
-            while (fs.Position < fs.Length)
+            while (fs.Position < fs.Length && emptyBlocks.Count<count)
             {
                 fs.Read(block, 0, block.Length);
-                if (Convert.ToBoolean(new Block(block).IsDeleted))
-                    emptyBlocks.Add(blockNumber++);
+                if (Convert.ToBoolean(block[0]))
+                    emptyBlocks.Add(blockNumber);
+                blockNumber++;
             }
             while (emptyBlocks.Count < count)
-            {
                 emptyBlocks.Add(blockNumber++);
-            }
+            fs.Close();
             return emptyBlocks;
         }
 
         private List<Block> ByteArrayToBlockList(byte[] data)
         {
+            int MaxDataSize = BlockSize - 1 - sizeof(int);
             List<Block> blockList = new List<Block>();
-            int blockCount = data.Length / (BlockSize - 1 - sizeof(int)) + 1;
+            int blockCount = data.Length / (MaxDataSize) + 1;
             for (int i = 0; i < blockCount; i++)
             {
-                byte[] block = new byte[BlockSize];
-                byte[] blockData = data.Skip(i * BlockSize).Take(BlockSize).ToArray();
+                byte[] block = new byte[MaxDataSize];
+                byte[] blockData = data.Skip(i * MaxDataSize).Take(MaxDataSize).ToArray();
                 blockData.CopyTo(block, 0);
                 blockList.Add(new Block(0, block, -1));
             }
             return blockList;
         }
 
-        internal Result<int> UpdateRecord(Record record,int blockNumber)
+        internal Result<int> UpdateRecord(Record record, int blockNumber)
         {
             Result<string> result = DeleteRecord(blockNumber);
-            if(result.Message == ResultType.Success)
+            if (result.Message == ResultType.Success)
             {
                 Result<int> intResult = WriteRecord(record);
                 return intResult;
@@ -131,14 +165,22 @@ namespace ElevenDb
             return new Result<int>(-1, ResultType.RecordUpdateFailure);
         }
 
-        private Result<string> DeleteRecord(int blockNumber)
+        internal Result<string> DeleteRecord(int blockNumber)
         {
-            throw new NotImplementedException();
+            var blockListResult = ReadBlock(blockNumber);
+            var blockList = blockListResult.Data;
+            int BlockNumber = blockNumber;
+            foreach (var block in blockList)
+            {
+                WriteBlock(BlockNumber, new Block(1,new byte[0],-1).GetAsByteArray());
+                BlockNumber = block.NextBlock;
+            }
+            return new Result<string>(Messages.Success, ResultType.Success);
         }
 
         internal void Close()
         {
-            fs.Close();
+            //Not needed
         }
     }
 }

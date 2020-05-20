@@ -2,18 +2,18 @@
 {
     internal class Messages
     {
-        internal static readonly string DbNotFound = "Cannot access db file";
-
-        public static string DbExists { get; internal set; }
-        public static string TreeReadFailure { get; internal set; }
-        public static string UnknownFailure { get; internal set; }
-        public static string TreeReadSuccess { get; internal set; }
-        public static string RecordReadFailure { get; internal set; }
-        public static string RecordNotFound { get; internal set; }
-        public static string StorageWriteError { get; internal set; }
-        public static string DbCreateSuccess { get; internal set; }
-        public static string TreeInsertionFailure { get; internal set; }
-        public static string TreeInsertionSuccess { get; internal set; }
-        public static string DbCreateFailure { get; internal set; }
+        internal static string DbNotFound { get; } = "Cannot access db file";
+        internal static string DbExists { get; } = "";
+        internal static string TreeReadFailure { get; } = "";
+        internal static string UnknownFailure { get; } = "";
+        internal static string RecordReadFailure { get; } = "";
+        internal static string RecordNotFound { get; } = "";
+        internal static string StorageWriteError { get; } = "";
+        internal static string TreeInsertionFailure { get; } = "";
+        internal static string DbCreateFailure { get; } = "";
+        internal static string Success { get; } = "";
+        internal static string TreeKeyNotFound { get; } = "";
+        internal static string TreeReadSuccess { get; } = "";
+        internal static string TreeInsertionSuccess { get; } = "";
     }
 }
