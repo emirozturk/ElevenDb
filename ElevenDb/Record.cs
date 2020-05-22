@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ElevenDb
 {
-    public class Record
+    internal class Record
     {
         public string Key { get; set; }
         public string Value { get; set; }

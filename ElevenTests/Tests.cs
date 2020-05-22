@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using ElevenDb;
 using System;
+using System.Collections.Generic;
 
 namespace ElevenTests
 {
@@ -39,8 +40,8 @@ namespace ElevenTests
                 for (int i = 0; i < testSize; i++)
                 {
                     int rnd = new Random().Next(0, testSize);
-                    Result<string> writeResult = database.Write("Key" + rnd , "Value" + rnd);
-                    if (writeResult.Message != ResultType.Success && writeResult.Message!=ResultType.Overwritten) Assert.Fail();
+                    Result<string> writeResult = database.Write("Key" + rnd, "Value" + rnd);
+                    if (writeResult.Message != ResultType.Success && writeResult.Message != ResultType.Overwritten) Assert.Fail();
                 }
                 database.Close();
                 Assert.Pass();
@@ -70,7 +71,7 @@ namespace ElevenTests
             Result<string> openResult = database.Open();
             if (openResult.Message == ResultType.Success)
             {
-                Result<string> readResult = database.Read("Key"+215);
+                Result<string> readResult = database.Read("Key" + 215);
                 if (readResult.Message == ResultType.Success || readResult.Message == ResultType.NotFound)
                 {
                     Console.WriteLine(readResult.Data);
@@ -92,7 +93,7 @@ namespace ElevenTests
             {
                 for (int i = 0; i < 10000; i++)
                 {
-                    Result<string> readResult = database.Read("Key" + new Random().Next(0,1000));
+                    Result<string> readResult = database.Read("Key" + new Random().Next(0, 1000));
                     if (readResult.Message != ResultType.Success && readResult.Message != ResultType.NotFound)
                         Assert.Fail();
                 }
@@ -100,7 +101,24 @@ namespace ElevenTests
                 database.Close();
             }
         }
-        /*
+        [Test]
+        public void DeleteTest()
+        {
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            Result<string> openResult = database.Open();
+            if (openResult.Message == ResultType.Success)
+            {
+                Result<string> writeResult = database.Delete("Key" + new Random().Next(0, 1000));
+                if (writeResult.Message == ResultType.Success)
+                    Assert.Pass();
+                else
+                    Assert.Fail();
+            }
+            else
+                Assert.Fail();
+            database.Close();
+        }
+        [Test]
         public void IterateTest()
         {
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
@@ -109,27 +127,53 @@ namespace ElevenTests
             {
                 Iterator iterator = database.GetIterator();
                 while (iterator.HasRecord)
-                    Console.WriteLine(iterator.GetNext().Value);
+                {
+                    Result<string> result = iterator.GetNext();
+                    Console.WriteLine(result.Data);
+                }
                 Assert.Pass();
             }
             else
                 Assert.Fail();
             database.Close();
         }
-        /*
+        [Test]
         public void ReadAllTest()
         {
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result<string> openResult = database.Open();
             if (openResult.Message == ResultType.Success)
             {
-                IEnumerable<Result> records = database.ReadAll();
+                Result<List<KeyValuePair<string, string>>> result = database.ReadAll();
+                if (result.Message == ResultType.Success)
+                    foreach (var kvp in result.Data)
+                        Console.WriteLine(kvp.Key + "-" + kvp.Value);
                 Assert.Pass();
             }
             else
                 Assert.Fail();
-
+            database.Close();
         }
-        */
+        [Test]
+        public void WriteBatchTest()
+        {
+            int testSize = 1000;
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            Result<string> openResult = database.Open();
+            if (openResult.Message == ResultType.Success)
+            {
+                List<KeyValuePair<string, string>> kvpList = new List<KeyValuePair<string, string>>();
+                for (int i = 0; i < testSize; i++)
+                {
+                    int rnd = new Random().Next(0, testSize);
+                    kvpList.Add("Key" + rnd, "Value" + rnd);
+                }
+                Result<string> writeResult = database.WriteBatch(kvpList);
+                if (writeResult.Message != ResultType.Success)
+                    Assert.Fail();
+                database.Close();
+                Assert.Pass();
+            }
+        }
     }
 }

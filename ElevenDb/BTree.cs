@@ -153,5 +153,15 @@ namespace ElevenDb
                 }
             }
         }
+
+        internal Result<string> DeleteRecord(string key)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal List<string> GetKeys()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

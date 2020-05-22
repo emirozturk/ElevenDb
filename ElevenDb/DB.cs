@@ -10,8 +10,8 @@ namespace ElevenDb
     {
         readonly private string dbPath;
         readonly Options options;
-        BTree index;
-        Storage storage;
+        internal BTree index;
+        internal Storage storage;
         public DB(string Path)
         {
             this.dbPath = Path;
@@ -28,15 +28,15 @@ namespace ElevenDb
                 {
                     storage = new Storage(dbPath);
                     Result<string> treeResult = ReadTree();
-                        if (treeResult.Message == ResultType.Success)
-                        {
-                            index = new BTree(treeResult.Data);
-                            return new Result<string>(Messages.TreeReadSuccess, ResultType.Success);
-                        }
-                        else if (treeResult.Message == ResultType.TreeReadFailure)
-                            return new Result<string>(Messages.TreeReadFailure, ResultType.TreeReadFailure);
-                        else
-                            return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
+                    if (treeResult.Message == ResultType.Success)
+                    {
+                        index = new BTree(treeResult.Data);
+                        return new Result<string>(Messages.TreeReadSuccess, ResultType.Success);
+                    }
+                    else if (treeResult.Message == ResultType.TreeReadFailure)
+                        return new Result<string>(Messages.TreeReadFailure, ResultType.TreeReadFailure);
+                    else
+                        return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
                 }
                 else
                 {
@@ -54,7 +54,6 @@ namespace ElevenDb
                 return result;
             }
         }
-
         public string ReadValue(string key)
         {
             return Read(key).Data;
@@ -73,6 +72,14 @@ namespace ElevenDb
             else if (recordStartResult.Message == ResultType.NotFound)
                 return new Result<string>(Messages.RecordNotFound, ResultType.NotFound);
             return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
+        }
+        public Result<List<KeyValuePair<string, string>>> ReadAll()
+        {
+            List<KeyValuePair<string, string>> kvpList = new List<KeyValuePair<string, string>>();
+            var iterator = new Iterator(this);
+            while (iterator.HasRecord)
+                kvpList.Add(new KeyValuePair<string, string>(iterator.CurrentKey, iterator.GetNext().Data));
+            return new Result<List<KeyValuePair<string, string>>>(kvpList, ResultType.Success);
         }
         public Result<string> Write(string Key, string Value)
         {
@@ -96,13 +103,27 @@ namespace ElevenDb
             }
             return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
         }
+        public Result<string> WriteBatch(List<KeyValuePair<string, string>> kvpList)
+        {
+            foreach (var kvp in kvpList)
+                Write(kvp.Key, kvp.Value);
+            return new Result<string>(Messages.Success, ResultType.Success);
+        }
         public Result<string> Delete(string key)
         {
             Result<int> blockNumberResult = index.GetBlockNumber(key);
             if (blockNumberResult.Message == ResultType.Success)
-                return storage.DeleteRecord(blockNumberResult.Data);
-            else
-                return new Result<string>(Messages.TreeKeyNotFound, ResultType.NotFound);
+            {
+                var result = storage.DeleteRecord(blockNumberResult.Data);
+                if (result.Message == ResultType.Success)
+                    return index.DeleteRecord(key);
+                return result;
+            }
+            return new Result<string>(Messages.TreeKeyNotFound, ResultType.NotFound);
+        }
+        public Iterator GetIterator()
+        {
+            return new Iterator(this);
         }
         public Result<string> Close()
         {
@@ -112,7 +133,6 @@ namespace ElevenDb
             else
                 return result;
         }
-
         private Result<string> WriteTree()
         {
             Result<string> result = storage.WriteTree(index.ToString());
@@ -122,20 +142,9 @@ namespace ElevenDb
         {
             return storage.ReadNodes();
         }
-
         public Result<string> ReadTree()
         {
             return storage.ReadTree();
         }
-        /*
-            public Iterator GetIterator()
-            {
-               throw new NotImplementedException();
-            }
-            public IEnumerable<Result> ReadAll()
-            {
-               throw new NotImplementedException();
-            }
-        */
     }
 }

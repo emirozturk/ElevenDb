@@ -1,5 +1,28 @@
 ﻿namespace ElevenDb
 {
+    public enum ResultType
+    {
+        Success,
+        NotFound,
+        Overwritten,
+        DbExists,
+        RecordCreateFailure,
+        DbNotFound,
+        DbCreateFailure,
+        TreeReadFailure,
+        UnknownFailure,
+        RecordReadFailure,
+        StorageWriteFailure,
+        TreeInsertionFailure,
+        RecordUpdateFailure,
+        BlockReadFailure,
+        BlockWriteFailure,
+        RecordWriteFailure,
+        FlagWriteError,
+        FlagReadError,
+        TreeWriteFailure,
+        FileCheckFailure,
+    }
     internal class Messages
     {
         public static string FileClosedProperly { get; internal set; }
@@ -18,4 +41,5 @@
         internal static string TreeReadSuccess { get; } = "";
         internal static string TreeInsertionSuccess { get; } = "";
     }
+
 }
