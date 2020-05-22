@@ -42,7 +42,7 @@ database.Open();
 Result<string> result = database.Read("key");
 if(result.Message = ResultType.Success)
 {
-	string value = result.Data;
+string value = result.Data;
 }
 string directValue = database.ReadKey("key");
 database.Close();
