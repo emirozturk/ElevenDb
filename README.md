@@ -9,7 +9,7 @@ It is in alpha state, so please don't use it with valuable data.
  - ElevenDb is created for storing small and simple key-value data.
  - Because of that, records are stored as 32 bit int values, so its max record capacity is 2147483647 records.
 
-### Usage
+## Usage
 To write a record to database instance, use:
 
 ```csharp
