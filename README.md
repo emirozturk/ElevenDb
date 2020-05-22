@@ -3,11 +3,11 @@ ElevenDb is an extremely-simple key-value database consisting of eleven differen
 It is in alpha state, so please don't use it with valuable data. 
 
 ## Features:
-	- ElevenDb uses native strings for keys and values.
-	- An index for keys is created using binary tree.
-	- Supported operations are : Read, Write, Delete, ReadAll, WriteAll and Iterate
-	- ElevenDb is created for storing small and simple key-value data.
-	- Because of that, records are stored as 32 bit int values, so its max record capacity is 2147483647 records.
+ - ElevenDb uses native strings for keys and values.
+ - An index for keys is created using binary tree.
+ - Supported operations are : Read, Write, Delete, ReadAll, WriteAll and Iterate
+ - ElevenDb is created for storing small and simple key-value data.
+ - Because of that, records are stored as 32 bit int values, so its max record capacity is 2147483647 records.
 
 ### Usage
 To write a record to database instance, use:
