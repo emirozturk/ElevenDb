@@ -154,9 +154,11 @@ namespace ElevenDb
             }
         }
 
-        internal Result<string> DeleteRecord(string key)
+        internal Result<string> DeleteRecord(string Key)
         {
-            throw new NotImplementedException();
+            TreeNode deleteNode = new TreeNode("",-1); 
+            Search(ref Root,Key,ref deleteNode);
+            //TBC
         }
 
         internal List<string> GetKeys()
