@@ -22,7 +22,7 @@ database.Close();
 Creating DB instance will create the db file, if it doesn't exist. 
 
 ```csharp
-DB database = new DB(path-to-db-file)
+DB database = new DB(path-to-db-file);
 ```
 
 To read a record:
