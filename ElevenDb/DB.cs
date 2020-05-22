@@ -54,6 +54,10 @@ namespace ElevenDb
             else
                 return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
         }
+        public string ReadValue(string key)
+        {
+            return Read(key).Data;
+        }
         public Result<String> Read(string Key)
         {
             Result<int> recordStartResult = index.GetBlockNumber(Key);
