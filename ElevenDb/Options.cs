@@ -16,7 +16,7 @@ namespace ElevenDb
 
         internal static Options GetDefault()
         {
-            return new Options(32);
+            return new Options(4);
         }
     }
 }

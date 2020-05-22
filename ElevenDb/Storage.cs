@@ -128,7 +128,7 @@ namespace ElevenDb
             byte[] block = new byte[BlockSize];
             while (fs.Position < fs.Length && emptyBlocks.Count<count)
             {
-                fs.Read(block, 0, block.Length);
+                fs.Read(block, 0, BlockSize);
                 if (Convert.ToBoolean(block[0]))
                     emptyBlocks.Add(blockNumber);
                 blockNumber++;

@@ -38,16 +38,25 @@ namespace ElevenDb
         {
             if (Root == null) return String.Empty;
             string treeString = "";
-            RootFirstTraverse(Root, ref treeString);
+            RootFirstTraverse(Root, ref treeString);            
             return treeString;
         }
-
+        private string IntegerToString(int Value)
+        {
+            byte[] buffer = BitConverter.GetBytes(Value);
+            return new string(buffer.Select(x => Convert.ToChar(x)).ToArray());
+        }
+        private int StringToInteger(string Value)
+        {
+            return BitConverter.ToInt32(Value.ToCharArray().Select(x => Convert.ToByte(x)).ToArray());
+        }
         private void RootFirstTraverse(Node Current, ref string treeString)
         {
             if (Current == null) return;
-            treeString += Encoding.UTF8.GetString(BitConverter.GetBytes(Current.Key.Length));
+            treeString += IntegerToString(Current.Key.Length);            
             treeString += Current.Key;
-            treeString += Encoding.UTF8.GetString(BitConverter.GetBytes(Current.BlockNumber));
+            treeString += IntegerToString(Current.BlockNumber);
+
             RootFirstTraverse(Current.Left, ref treeString);
             RootFirstTraverse(Current.Right, ref treeString);
         }
@@ -56,9 +65,10 @@ namespace ElevenDb
         {
             List<Node> nodeList = StringToNodeList(treeString);
             foreach (var n in nodeList)
+            {
                 AddRecord(n.Key, n.BlockNumber);
+            }
         }
-
         private List<Node> StringToNodeList(string treeString)
         {
             List<Node> nodeList = new List<Node>();
@@ -66,13 +76,13 @@ namespace ElevenDb
             int length;
             while (index < treeString.Length)
             {
-                length = BitConverter.ToInt32(Encoding.UTF8.GetBytes(treeString.Substring(index, sizeof(int))));
+                length = StringToInteger(treeString.Substring(index, sizeof(int)));
                 index += sizeof(int);
 
                 string key = treeString.Substring(index, length);
                 index += length;
 
-                int blockNumber = BitConverter.ToInt32(Encoding.UTF8.GetBytes(treeString.Substring(index, sizeof(int))));
+                int blockNumber = StringToInteger(treeString.Substring(index, sizeof(int)));
                 index += sizeof(int);
 
                 nodeList.Add(new Node(key, blockNumber));
@@ -85,7 +95,7 @@ namespace ElevenDb
             Node result = new Node(Key, -1);
             Search(ref Root, Key, ref result);
             if (result.BlockNumber == -1)
-                return new Result<int>(-1, ResultType.KeyNotFound);
+                return new Result<int>(-1, ResultType.NotFound);
             else
                 return new Result<int>(result.BlockNumber, ResultType.Success);
         }
@@ -115,12 +125,12 @@ namespace ElevenDb
             if (Current == null) return;
             if (Key == Current.Key)
                 Result = Current;
-            else if (Key.CompareTo(Current.Key) > 0)
+            else if (String.Compare(Key,Current.Key) > 0)
             {
                 Node right = Current.Right;
                 Search(ref right, Key, ref Result);
             }
-            else if (Key.CompareTo(Current.Key) < 0)
+            else if (String.Compare(Key,Current.Key) < 0)
             {
                 Node left = Current.Left;
                 Search(ref left, Key, ref Result);
@@ -131,7 +141,7 @@ namespace ElevenDb
         {
             if (Current == null)
                 Current = new Node(Key, BlockNumber);
-            else if (Key.CompareTo(Current.Key) > 0)
+            else if (String.Compare(Key, Current.Key) > 0)
             {
                 if (Current.Right == null)
                     Current.Right = new Node(Key, BlockNumber);
@@ -141,7 +151,7 @@ namespace ElevenDb
                     Add(ref right, Key, BlockNumber);
                 }
             }
-            else if (Key.CompareTo(Current.Key) < 0)
+            else if (String.Compare(Key, Current.Key) < 0)
             {
                 if (Current.Left == null)
                     Current.Left = new Node(Key, BlockNumber);

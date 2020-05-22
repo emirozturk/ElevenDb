@@ -29,6 +29,24 @@ namespace ElevenTests
             database.Close();
         }
         [Test]
+        public void MultiWriteTest()
+        {
+            int testSize = 1000;
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            Result<string> openResult = database.Open();
+            if (openResult.Message == ResultType.Success)
+            {
+                for (int i = 0; i < testSize; i++)
+                {
+                    int rnd = new Random().Next(0, testSize);
+                    Result<string> writeResult = database.Write("Key" + rnd , "Value" + rnd);
+                    if (writeResult.Message != ResultType.Success && writeResult.Message!=ResultType.Overwritten) Assert.Fail();
+                }
+                Assert.Pass();
+                database.Close();
+            }
+        }
+        [Test]
         public void OverwriteTest()
         {
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
@@ -52,7 +70,7 @@ namespace ElevenTests
             Result<string> openResult = database.Open();
             if (openResult.Message == ResultType.Success)
             {
-                Result<string> readResult = database.Read("Key");
+                Result<string> readResult = database.Read("Key"+215);
                 if (readResult.Message == ResultType.Success || readResult.Message == ResultType.NotFound)
                 {
                     Console.WriteLine(readResult.Data);
@@ -64,7 +82,23 @@ namespace ElevenTests
             else
                 Assert.Fail();
             database.Close();
-
+        }
+        [Test]
+        public void MultiReadTest()
+        {
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            Result<string> openResult = database.Open();
+            if (openResult.Message == ResultType.Success)
+            {
+                for (int i = 0; i < 1000; i++)
+                {
+                    Result<string> readResult = database.Read("Key" + new Random().Next(0,1000));
+                    if (readResult.Message != ResultType.Success && readResult.Message != ResultType.NotFound)
+                        Assert.Fail();
+                }
+                Assert.Pass();
+                database.Close();
+            }
         }
         /*
         public void IterateTest()

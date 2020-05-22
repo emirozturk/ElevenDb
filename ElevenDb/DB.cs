@@ -16,11 +16,7 @@ namespace ElevenDb
         {
             this.dbPath = Path;
             options = Options.GetDefault();
-        }
-        public DB(string Path, Options Options)
-        {
-            this.dbPath = Path;
-            options = Options;
+            Logger.LogPath = dbPath;
         }
         public Result<string> Open()
         {
@@ -69,8 +65,8 @@ namespace ElevenDb
                 else if (result.Message == ResultType.RecordReadFailure)
                     return new Result<string>(Messages.RecordReadFailure, ResultType.RecordReadFailure);
             }
-            else if (recordStartResult.Message == ResultType.RecordNotFound)
-                return new Result<string>(Messages.RecordNotFound, ResultType.RecordNotFound);
+            else if (recordStartResult.Message == ResultType.NotFound)
+                return new Result<string>(Messages.RecordNotFound, ResultType.NotFound);
             return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
         }
         public Result<string> Write(string Key, string Value)
@@ -85,7 +81,7 @@ namespace ElevenDb
                     return new Result<string>(Messages.Success, ResultType.Overwritten);
                 }
             }
-            else if (blockNumberResult.Message == ResultType.KeyNotFound)
+            else if (blockNumberResult.Message == ResultType.NotFound)
             {
                 Result<int> newBlockNumberResult = storage.WriteRecord(new Record(Key, Value));
                 if (newBlockNumberResult.Message == ResultType.Success)
@@ -111,7 +107,7 @@ namespace ElevenDb
             if (blockNumberResult.Message == ResultType.Success)
                 return storage.DeleteRecord(blockNumberResult.Data);
             else
-                return new Result<string>(Messages.TreeKeyNotFound, ResultType.KeyNotFound);
+                return new Result<string>(Messages.TreeKeyNotFound, ResultType.NotFound);
         }
         public void Close()
         {

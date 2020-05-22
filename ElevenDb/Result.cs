@@ -16,8 +16,6 @@ namespace ElevenDb
         TreeReadFailure,
         UnknownFailure,
         RecordReadFailure,
-        RecordNotFound,
-        KeyNotFound,
         StorageWriteFailure,
         TreeInsertionFailure,
         RecordUpdateFailure,
