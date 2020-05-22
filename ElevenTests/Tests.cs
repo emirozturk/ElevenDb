@@ -31,7 +31,7 @@ namespace ElevenTests
         [Test]
         public void MultiWriteTest()
         {
-            int testSize = 1000;
+            int testSize = 10000;
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result<string> openResult = database.Open();
             if (openResult.Message == ResultType.Success)
@@ -90,7 +90,7 @@ namespace ElevenTests
             Result<string> openResult = database.Open();
             if (openResult.Message == ResultType.Success)
             {
-                for (int i = 0; i < 1000; i++)
+                for (int i = 0; i < 10000; i++)
                 {
                     Result<string> readResult = database.Read("Key" + new Random().Next(0,1000));
                     if (readResult.Message != ResultType.Success && readResult.Message != ResultType.NotFound)
