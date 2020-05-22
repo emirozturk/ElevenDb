@@ -22,5 +22,9 @@ namespace ElevenDb
         BlockReadFailure,
         BlockWriteFailure,
         RecordWriteFailure,
+        FlagWriteError,
+        FlagReadError,
+        TreeWriteFailure,
+        FileCheckFailure,
     }
 }

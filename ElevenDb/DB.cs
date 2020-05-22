@@ -23,37 +23,38 @@ namespace ElevenDb
             Result<string> result = Storage.DbExists(dbPath);
             if (result.Message == ResultType.DbExists)
             {
-                storage = new Storage(dbPath, options);
-                Result<string> treeResult = ReadTree();
-                if (treeResult.Message == ResultType.Success)
+                Result<string> properlyCloseResult = Storage.IsFileClosedProperly(dbPath);
+                if (properlyCloseResult.Message == ResultType.Success)
                 {
-                    index = new BTree(treeResult.Data);
+                    storage = new Storage(dbPath);
+                    Result<string> treeResult = ReadTree();
+                        if (treeResult.Message == ResultType.Success)
+                        {
+                            index = new BTree(treeResult.Data);
+                            return new Result<string>(Messages.TreeReadSuccess, ResultType.Success);
+                        }
+                        else if (treeResult.Message == ResultType.TreeReadFailure)
+                            return new Result<string>(Messages.TreeReadFailure, ResultType.TreeReadFailure);
+                        else
+                            return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
+                }
+                else
+                {
+                    storage = new Storage(dbPath);
+                    index = new BTree(GetNodeList());
                     return new Result<string>(Messages.TreeReadSuccess, ResultType.Success);
                 }
-                else if (treeResult.Message == ResultType.TreeReadFailure)
-                    return new Result<string>(Messages.TreeReadFailure, ResultType.TreeReadFailure);
-                else
-                    return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
             }
             else
             {
-                result = Storage.CreateDb(dbPath);
-                storage = new Storage(dbPath, options);
+                result = Storage.CreateDb(dbPath, options);
+                storage = new Storage(dbPath);
                 index = new BTree();
                 storage.WriteRecord(new Record("ElevenTree000", index.ToString()));
                 return result;
             }
         }
-        public Result<string> ReadTree()
-        {
-            Result<Record> result = storage.ReadRecord(0);
-            if (result.Message == ResultType.Success)
-                return new Result<string>(result.Data.Value, ResultType.Success);
-            else if (result.Message == ResultType.RecordReadFailure)
-                return new Result<string>(Messages.RecordReadFailure, ResultType.RecordReadFailure);
-            else
-                return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
-        }
+
         public string ReadValue(string key)
         {
             return Read(key).Data;
@@ -89,17 +90,7 @@ namespace ElevenDb
             {
                 Result<int> newBlockNumberResult = storage.WriteRecord(new Record(Key, Value));
                 if (newBlockNumberResult.Message == ResultType.Success)
-                {
-                    Result<string> result = index.AddRecord(Key, newBlockNumberResult.Data);
-                    if (result.Message == ResultType.Success)
-                    {
-                        Result<int> updateResult = storage.UpdateRecord(new Record("ElevenTree000", index.ToString()), 0);
-                        if (updateResult.Message == ResultType.Success)
-                            return new Result<string>(Messages.Success, ResultType.Success);
-                    }
-                    return
-                        new Result<string>(Messages.TreeInsertionFailure, ResultType.TreeInsertionFailure);
-                }
+                    return index.AddRecord(Key, newBlockNumberResult.Data);
                 else if (newBlockNumberResult.Message == ResultType.RecordWriteFailure)
                     return new Result<string>(Messages.StorageWriteError, ResultType.RecordWriteFailure);
             }
@@ -113,20 +104,38 @@ namespace ElevenDb
             else
                 return new Result<string>(Messages.TreeKeyNotFound, ResultType.NotFound);
         }
-        public void Close()
+        public Result<string> Close()
         {
-            storage.Close();
+            var result = WriteTree();
+            if (result.Message == ResultType.Success)
+                return storage.Close();
+            else
+                return result;
+        }
+
+        private Result<string> WriteTree()
+        {
+            Result<string> result = storage.WriteTree(index.ToString());
+            return result;
+        }
+        private List<TreeNode> GetNodeList()
+        {
+            return storage.ReadNodes();
+        }
+
+        public Result<string> ReadTree()
+        {
+            return storage.ReadTree();
         }
         /*
-        public Iterator GetIterator()
-        {
-            throw new NotImplementedException();
-        }
-        /*
-        public IEnumerable<Result> ReadAll()
-        {
-            throw new NotImplementedException();
-        }
+            public Iterator GetIterator()
+            {
+               throw new NotImplementedException();
+            }
+            public IEnumerable<Result> ReadAll()
+            {
+               throw new NotImplementedException();
+            }
         */
     }
 }

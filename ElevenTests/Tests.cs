@@ -31,7 +31,7 @@ namespace ElevenTests
         [Test]
         public void MultiWriteTest()
         {
-            int testSize = 10000;
+            int testSize = 1000;
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result<string> openResult = database.Open();
             if (openResult.Message == ResultType.Success)
@@ -42,8 +42,8 @@ namespace ElevenTests
                     Result<string> writeResult = database.Write("Key" + rnd , "Value" + rnd);
                     if (writeResult.Message != ResultType.Success && writeResult.Message!=ResultType.Overwritten) Assert.Fail();
                 }
-                Assert.Pass();
                 database.Close();
+                Assert.Pass();
             }
         }
         [Test]

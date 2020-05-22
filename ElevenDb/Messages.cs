@@ -2,6 +2,8 @@
 {
     internal class Messages
     {
+        public static string FileClosedProperly { get; internal set; }
+        public static string FileNotClosedProperly { get; internal set; }
         internal static string DbNotFound { get; } = "Cannot access db file";
         internal static string DbExists { get; } = "";
         internal static string TreeReadFailure { get; } = "";
