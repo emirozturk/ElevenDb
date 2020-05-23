@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace ElevenDb
 {
@@ -172,17 +173,19 @@ namespace ElevenDb
                     return Current.Left;
                 }
 
-                Current = MinValue(Current.Right);
+                var kv = MinValue(Current.Right);
+                Current.Key = kv.Key;
+                Current.BlockNumber = kv.Value;
                 Current.Right = Delete(Current.Right, Current.Key);
             }
             return Current;
         }
-        private TreeNode MinValue(TreeNode Current)
+        private KeyValuePair<string, int> MinValue(TreeNode Current)
         {
-            TreeNode min = Current;
+            KeyValuePair<string, int> min = new KeyValuePair<string, int>(Current.Key, Current.BlockNumber);
             while (Current.Left != null)
             {
-                min = Current.Left;
+                min = new KeyValuePair<string, int>(Current.Left.Key, Current.Left.BlockNumber);
                 Current = Current.Left;
             }
             return min;
@@ -238,7 +241,7 @@ namespace ElevenDb
             Result result = new Result();
             try
             {
-                Delete(Root, Key);
+                Root = Delete(Root, Key);
                 result.SetDataWithSuccess(null);
             }
             catch (Exception e)

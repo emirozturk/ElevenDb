@@ -10,7 +10,7 @@ namespace ElevenDb
         internal Iterator(DB Db)
         {
             db = Db;
-            keys = Db.index.GetKeys().Data;
+            keys = Db.index.GetKeys().Value;
             counter = 0;
         }
         public Result GetNext()

@@ -12,13 +12,13 @@ namespace ElevenDb
         private static int BlockSize;
         private const int KB = 1024;
         private readonly int MetadataSize = 2; //|flag|blocksize|blocks...|
-        private FileStream fs;
+        FileStream fs;
         internal Storage(string DbPath)
         {
             this.DbPath = DbPath;
-            BlockSize = ReadBlockSize().Data * KB;
+            BlockSize = ReadBlockSize().Value * KB;
             TreePath = Path.Combine(Path.GetDirectoryName(DbPath), Path.GetFileNameWithoutExtension(DbPath) + ".tree");
-            SetFileClosedProperlyFlag();
+            UnsetFileClosedProperlyFlag();
         }
         internal static bool DbExists(string DbPath)
         {
@@ -141,7 +141,7 @@ namespace ElevenDb
             Result result = new Result();
             try
             {
-                FileStream fs = new FileStream(DbPath, FileMode.Open);
+                fs = new FileStream(DbPath, FileMode.Open);
                 fs.Write(new byte[1] { 1 }, 0, 1);
                 result.SetDataWithSuccess(null);
             }
@@ -155,12 +155,12 @@ namespace ElevenDb
             }
             return result;
         }
-        private Result UnsetFileClosedProperlyFlag()
+        internal Result UnsetFileClosedProperlyFlag()
         {
             Result result = new Result();
             try
             {
-                FileStream fs = new FileStream(DbPath, FileMode.Open);
+                fs = new FileStream(DbPath, FileMode.Open);
                 fs.Write(new byte[1] { 0 }, 0, 1);
                 result.SetDataWithSuccess(null);
             }
@@ -179,7 +179,7 @@ namespace ElevenDb
             Result result = new Result();
             try
             {
-                FileStream fs = new FileStream(DbPath, FileMode.Open);
+                fs = new FileStream(DbPath, FileMode.Open);
                 fs.Seek(1, SeekOrigin.Begin);
                 int recordSize = fs.ReadByte();
                 result.SetDataWithSuccess(recordSize);
@@ -196,21 +196,29 @@ namespace ElevenDb
         }
         internal Result ReadRecord(int BlockNumber)
         {
-            Result result = ReadBlocks(BlockNumber);
-            if (result.IsSuccess)
-            {
-                Record record = Converter.BlockListToRecord(result.Data);
+            Record record = new Record("", "");
+            Result result = new Result();
+            if (BlockNumber == -1)
                 result.SetDataWithSuccess(record);
+            else
+            {
+                result = ReadBlocks(BlockNumber);
+                if (result.IsSuccess)
+                {
+                    record = Converter.BlockListToRecord(result.Value);
+                    result.SetDataWithSuccess(record);
+                }
             }
             return result;
         }
         internal Result WriteBlock(int BlockNumber, byte[] value)
         {
             Result result = new Result();
+            fs = new FileStream(DbPath, FileMode.Open);
             BinaryWriter bw = new BinaryWriter(fs);
             try
             {
-                fs = new FileStream(DbPath, FileMode.Open);
+                bw = new BinaryWriter(fs);
                 bw.Seek(MetadataSize + BlockNumber * BlockSize, SeekOrigin.Begin);
                 bw.Write(value);
                 result.SetDataWithSuccess(null);
@@ -232,7 +240,7 @@ namespace ElevenDb
             Result result = FindEmptyBlocks(blockList.Count);
             if (result.IsSuccess)
             {
-                List<int> emptyList = result.Data;
+                List<int> emptyList = result.Value;
                 for (int i = 0; i < blockList.Count - 1; i++)
                 {
                     blockList[i].NextBlock = emptyList[i + 1];
@@ -257,12 +265,12 @@ namespace ElevenDb
             if (result.IsSuccess)
             {
                 List<TreeNode> treeNodes = new List<TreeNode>();
-                foreach (int blockNumber in result.Data)
+                foreach (int blockNumber in result.Value)
                 {
                     Result readRecordResult = ReadRecord(blockNumber);
                     if (readRecordResult.IsSuccess)
                     {
-                        treeNodes.Add(new TreeNode(readRecordResult.Data.Key, blockNumber));
+                        treeNodes.Add(new TreeNode(readRecordResult.Value.Key, blockNumber));
                     }
                     else
                     {
@@ -313,18 +321,24 @@ namespace ElevenDb
         }
         internal Result DeleteRecord(int BlockNumber)
         {
-            Result result = ReadBlocks(BlockNumber);
-            if (result.IsSuccess)
+            Result result = new Result();
+            if (BlockNumber == -1)
+                result.SetDataWithSuccess(null);
+            else
             {
-                dynamic blockList = result.Data;
-                int blockNumber = BlockNumber;
-                foreach (dynamic block in blockList)
+                result = ReadBlocks(BlockNumber);
+                if (result.IsSuccess)
                 {
-                    result = WriteBlock(blockNumber, new Block(1, 0, new byte[0], -1).GetAsByteArray());
-                    blockNumber = block.NextBlock;
-                    if (!result.IsSuccess)
+                    var blockList = result.Value;
+                    int blockNumber = BlockNumber;
+                    foreach (dynamic block in blockList)
                     {
-                        return result;
+                        result = WriteBlock(blockNumber, new Block(1, 0, new byte[0], -1).GetAsByteArray());
+                        blockNumber = block.NextBlock;
+                        if (!result.IsSuccess)
+                        {
+                            return result;
+                        }
                     }
                 }
             }
@@ -332,20 +346,13 @@ namespace ElevenDb
         }
         internal Result Close()
         {
-            return UnsetFileClosedProperlyFlag();
+            return SetFileClosedProperlyFlag();
         }
         internal static Result IsFileClosedProperly(string DbPath)
         {
-            Result result = new Result();
-            Result flagResult = ReadFileClosedProperlyFlag(DbPath);
-            if (flagResult.IsSuccess)
-            {
-                if (flagResult.Data == 0)
-                {
-                    result.SetDataWithSuccess(null);
-                }
-            }
-
+            Result result = ReadFileClosedProperlyFlag(DbPath);
+            if (result.IsSuccess)
+                result.SetDataWithSuccess(Convert.ToBoolean(result.Value));
             return result;
         }
         internal static Result ReadFileClosedProperlyFlag(string DbPath)

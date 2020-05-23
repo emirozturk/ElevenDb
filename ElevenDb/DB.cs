@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ElevenDb
 {
@@ -31,19 +32,14 @@ namespace ElevenDb
                 if (result.IsSuccess)
                 {
                     storage = new Storage(dbPath);
-                    result = ReadTree();
+
+                    if (result.Value) result = ReadTree();
+                    else result = GetNodeList();
+
                     if (result.IsSuccess)
                     {
-                        index = new BTree(result.Data);
-                    }
-                }
-                else
-                {
-                    storage = new Storage(dbPath);
-                    result = GetNodeList();
-                    if (result.IsSuccess)
-                    {
-                        index = new BTree(result.Data);
+                        index = new BTree(result.Value);
+                        result.SetDataWithSuccess(null);
                     }
                 }
             }
@@ -54,24 +50,24 @@ namespace ElevenDb
                 {
                     storage = new Storage(dbPath);
                     index = new BTree();
-                    result = storage.WriteRecord(new Record("ElevenTree000", index.ToString()));
+                    result.SetDataWithSuccess(null);
                 }
             }
             return result;
         }
         public string ReadValue(string key)
         {
-            return Read(key).Data;
+            return Read(key).Value.Value;
         }
         public Result Read(string Key)
         {
             Result result = index.GetBlockNumber(Key);
             if (result.IsSuccess)
             {
-                result = storage.ReadRecord(result.Data);
+                result = storage.ReadRecord(result.Value);
                 if (result.IsSuccess)
                 {
-                    result.SetDataWithSuccess(result.Data.Value);
+                    result.SetDataWithSuccess(result.Value.Value);
                 }
             }
             return result;
@@ -83,7 +79,7 @@ namespace ElevenDb
             Iterator iterator = new Iterator(this);
             while (iterator.HasRecord)
             {
-                kvpList.Add(new KeyValuePair<string, string>(iterator.CurrentKey, iterator.GetNext().Data));
+                kvpList.Add(new KeyValuePair<string, string>(iterator.CurrentKey, iterator.GetNext().Value));
             }
 
             result.SetDataWithSuccess(kvpList);
@@ -94,12 +90,12 @@ namespace ElevenDb
             Result result = index.GetBlockNumber(Key);
             if (result.IsSuccess)
             {
-                if (result.Data != -1)
+                if (result.Value != -1)
                 {
-                    result = storage.UpdateRecord(new Record(Key, Value), result.Data);
+                    result = storage.UpdateRecord(new Record(Key, Value), result.Value);
                     if (result.IsSuccess)
                     {
-                        result = index.UpdateRecord(Key, result.Data);
+                        result = index.UpdateRecord(Key, result.Value);
                     }
                 }
                 else
@@ -107,7 +103,7 @@ namespace ElevenDb
                     result = storage.WriteRecord(new Record(Key, Value));
                     if (result.IsSuccess)
                     {
-                        result = index.AddRecord(Key, result.Data);
+                        result = index.AddRecord(Key, result.Value);
                     }
                 }
             }
@@ -131,7 +127,7 @@ namespace ElevenDb
             Result result = index.GetBlockNumber(key);
             if (result.IsSuccess)
             {
-                result = storage.DeleteRecord(result.Data);
+                result = storage.DeleteRecord(result.Value);
                 if (result.IsSuccess)
                 {
                     result = index.DeleteRecord(key);
@@ -158,5 +154,22 @@ namespace ElevenDb
             return storage.ReadTree();
         }
 
+        public Result RepairDb()
+        {
+            Result result = new Result();
+            if (Storage.DbExists(dbPath))
+            {
+                storage = new Storage(dbPath);
+                result = GetNodeList();
+                if (result.IsSuccess)
+                {
+                    index = new BTree(result.Value);
+                }
+                result = storage.Close();
+            }
+            else
+                result.SetDataWithSuccess(null);
+            return result;
+        }
     }
 }

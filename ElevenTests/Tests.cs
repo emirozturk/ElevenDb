@@ -20,6 +20,7 @@ namespace ElevenTests
             if (openResult.IsSuccess)
             {
                 Result writeResult = database.Write("Key", "Value");
+                database.Close();
                 if (writeResult.IsSuccess)
                 {
                     Assert.Pass();
@@ -33,8 +34,6 @@ namespace ElevenTests
             {
                 Assert.Fail();
             }
-
-            database.Close();
         }
         [Test]
         public void MultiWriteTest()
@@ -65,6 +64,7 @@ namespace ElevenTests
             if (openResult.IsSuccess)
             {
                 Result writeResult = database.Write("Key", "Value");
+                database.Close();
                 if (writeResult.IsSuccess)
                 {
                     Assert.Pass();
@@ -78,8 +78,6 @@ namespace ElevenTests
             {
                 Assert.Fail();
             }
-
-            database.Close();
         }
         [Test]
         public void ReadTest()
@@ -88,10 +86,11 @@ namespace ElevenTests
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
-                Result readResult = database.Read("Key" + 215);
+                Result readResult = database.Read("Key");
+                database.Close();
                 if (readResult.IsSuccess)
                 {
-                    Console.WriteLine(readResult.Data);
+                    Console.WriteLine(readResult.Value);
                     Assert.Pass();
                 }
                 else
@@ -103,14 +102,13 @@ namespace ElevenTests
             {
                 Assert.Fail();
             }
-
-            database.Close();
         }
         [Test]
         public void MultiReadTest()
         {
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
+            database.Close();
             if (openResult.IsSuccess)
             {
                 for (int i = 0; i < 10000; i++)
@@ -120,9 +118,9 @@ namespace ElevenTests
                     {
                         Assert.Fail();
                     }
+                    Console.WriteLine(readResult.Value);
                 }
                 Assert.Pass();
-                database.Close();
             }
         }
         [Test]
@@ -132,8 +130,9 @@ namespace ElevenTests
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
-                Result writeResult = database.Delete("Key" + new Random().Next(0, 1000));
-                if (writeResult.IsSuccess)
+                Result result = database.Delete("Key" + new Random().Next(0, 1000));
+                database.Close();
+                if (result.IsSuccess)
                 {
                     Assert.Pass();
                 }
@@ -147,7 +146,6 @@ namespace ElevenTests
                 Assert.Fail();
             }
 
-            database.Close();
         }
         [Test]
         public void IterateTest()
@@ -160,8 +158,9 @@ namespace ElevenTests
                 while (iterator.HasRecord)
                 {
                     Result result = iterator.GetNext();
-                    Console.WriteLine(result.Data);
+                    Console.WriteLine(result.Value);
                 }
+                database.Close();
                 Assert.Pass();
             }
             else
@@ -169,7 +168,6 @@ namespace ElevenTests
                 Assert.Fail();
             }
 
-            database.Close();
         }
         [Test]
         public void ReadAllTest()
@@ -179,9 +177,11 @@ namespace ElevenTests
             if (openResult.IsSuccess)
             {
                 Result result = database.ReadAll();
+                database.Close();
                 if (result.IsSuccess)
                 {
-                    foreach (dynamic kvp in result.Data)
+                    Console.WriteLine(result.Value.Count);
+                    foreach (var kvp in result.Value)
                     {
                         Console.WriteLine(kvp.Key + "-" + kvp.Value);
                     }
@@ -193,8 +193,6 @@ namespace ElevenTests
             {
                 Assert.Fail();
             }
-
-            database.Close();
         }
         [Test]
         public void WriteBatchTest()
@@ -215,10 +213,16 @@ namespace ElevenTests
                 {
                     Assert.Fail();
                 }
-
                 database.Close();
                 Assert.Pass();
             }
+        }
+        public void RepairTest()
+        {
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            Result result = database.RepairDb();
+            if (result.IsSuccess) Assert.Pass();
+            else Assert.Fail();
         }
     }
 }

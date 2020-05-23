@@ -16,7 +16,7 @@ namespace ElevenDb
             IsDeleted = ByteArray[0];
             IsFirst = ByteArray[1];
             Data = new byte[DataSize];
-            Buffer.BlockCopy(ByteArray, 1, Data, 0, DataSize);
+            Buffer.BlockCopy(ByteArray, 2, Data, 0, DataSize);
             NextBlock = BitConverter.ToInt32(ByteArray, ByteArray.Length - sizeof(int));
         }
         public Block(byte IsDeleted, byte IsFirst, byte[] Data, int NextBlock)
