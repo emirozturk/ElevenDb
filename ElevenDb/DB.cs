@@ -1,150 +1,162 @@
-﻿using Microsoft.VisualBasic.CompilerServices;
-using System;
-using System.Collections.Generic;
-using System.Runtime.Versioning;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace ElevenDb
 {
     public class DB
     {
-        readonly private string dbPath;
-        readonly Options options;
+        private readonly string dbPath;
+        private readonly Options options;
         internal BTree index;
         internal Storage storage;
         public DB(string Path)
         {
-            this.dbPath = Path;
+            dbPath = Path;
             options = Options.GetDefault();
             Logger.LogPath = dbPath;
         }
-        public Result<string> Open()
+        private Result WriteTree()
         {
-            Result<string> result = Storage.DbExists(dbPath);
-            if (result.Message == ResultType.DbExists)
+            return storage.WriteTree(index.ToString());
+        }
+        private Result GetNodeList()
+        {
+            return storage.ReadAllRecords();
+        }
+        public Result Open()
+        {
+            Result result;
+            if (Storage.DbExists(dbPath))
             {
-                Result<string> properlyCloseResult = Storage.IsFileClosedProperly(dbPath);
-                if (properlyCloseResult.Message == ResultType.Success)
+                result = Storage.IsFileClosedProperly(dbPath);
+                if (result.IsSuccess)
                 {
                     storage = new Storage(dbPath);
-                    Result<string> treeResult = ReadTree();
-                    if (treeResult.Message == ResultType.Success)
+                    result = ReadTree();
+                    if (result.IsSuccess)
                     {
-                        index = new BTree(treeResult.Data);
-                        return new Result<string>(Messages.TreeReadSuccess, ResultType.Success);
+                        index = new BTree(result.Data);
                     }
-                    else if (treeResult.Message == ResultType.TreeReadFailure)
-                        return new Result<string>(Messages.TreeReadFailure, ResultType.TreeReadFailure);
-                    else
-                        return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
                 }
                 else
                 {
                     storage = new Storage(dbPath);
-                    index = new BTree(GetNodeList());
-                    return new Result<string>(Messages.TreeReadSuccess, ResultType.Success);
+                    result = GetNodeList();
+                    if (result.IsSuccess)
+                    {
+                        index = new BTree(result.Data);
+                    }
                 }
             }
             else
             {
                 result = Storage.CreateDb(dbPath, options);
-                storage = new Storage(dbPath);
-                index = new BTree();
-                storage.WriteRecord(new Record("ElevenTree000", index.ToString()));
-                return result;
+                if (result.IsSuccess)
+                {
+                    storage = new Storage(dbPath);
+                    index = new BTree();
+                    result = storage.WriteRecord(new Record("ElevenTree000", index.ToString()));
+                }
             }
+            return result;
         }
         public string ReadValue(string key)
         {
             return Read(key).Data;
         }
-        public Result<String> Read(string Key)
+        public Result Read(string Key)
         {
-            Result<int> recordStartResult = index.GetBlockNumber(Key);
-            if (recordStartResult.Message == ResultType.Success)
+            Result result = index.GetBlockNumber(Key);
+            if (result.IsSuccess)
             {
-                Result<Record> result = storage.ReadRecord(recordStartResult.Data);
-                if (result.Message == ResultType.Success)
-                    return new Result<string>(result.Data.Value, ResultType.Success);
-                else if (result.Message == ResultType.RecordReadFailure)
-                    return new Result<string>(Messages.RecordReadFailure, ResultType.RecordReadFailure);
-            }
-            else if (recordStartResult.Message == ResultType.NotFound)
-                return new Result<string>(Messages.RecordNotFound, ResultType.NotFound);
-            return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
-        }
-        public Result<List<KeyValuePair<string, string>>> ReadAll()
-        {
-            List<KeyValuePair<string, string>> kvpList = new List<KeyValuePair<string, string>>();
-            var iterator = new Iterator(this);
-            while (iterator.HasRecord)
-                kvpList.Add(new KeyValuePair<string, string>(iterator.CurrentKey, iterator.GetNext().Data));
-            return new Result<List<KeyValuePair<string, string>>>(kvpList, ResultType.Success);
-        }
-        public Result<string> Write(string Key, string Value)
-        {
-            Result<int> blockNumberResult = index.GetBlockNumber(Key);
-            if (blockNumberResult.Message == ResultType.Success)
-            {
-                Result<int> updateResult = storage.UpdateRecord(new Record(Key, Value), blockNumberResult.Data);
-                if (updateResult.Message == ResultType.Success)
+                result = storage.ReadRecord(result.Data);
+                if (result.IsSuccess)
                 {
-                    index.UpdateRecord(Key, updateResult.Data);
-                    return new Result<string>(Messages.Success, ResultType.Overwritten);
+                    result.SetDataWithSuccess(result.Data.Value);
                 }
             }
-            else if (blockNumberResult.Message == ResultType.NotFound)
-            {
-                Result<int> newBlockNumberResult = storage.WriteRecord(new Record(Key, Value));
-                if (newBlockNumberResult.Message == ResultType.Success)
-                    return index.AddRecord(Key, newBlockNumberResult.Data);
-                else if (newBlockNumberResult.Message == ResultType.RecordWriteFailure)
-                    return new Result<string>(Messages.StorageWriteError, ResultType.RecordWriteFailure);
-            }
-            return new Result<string>(Messages.UnknownFailure, ResultType.UnknownFailure);
+            return result;
         }
-        public Result<string> WriteBatch(List<KeyValuePair<string, string>> kvpList)
+        public Result ReadAll()
         {
-            foreach (var kvp in kvpList)
-                Write(kvp.Key, kvp.Value);
-            return new Result<string>(Messages.Success, ResultType.Success);
-        }
-        public Result<string> Delete(string key)
-        {
-            Result<int> blockNumberResult = index.GetBlockNumber(key);
-            if (blockNumberResult.Message == ResultType.Success)
+            Result result = new Result();
+            List<KeyValuePair<string, string>> kvpList = new List<KeyValuePair<string, string>>();
+            Iterator iterator = new Iterator(this);
+            while (iterator.HasRecord)
             {
-                var result = storage.DeleteRecord(blockNumberResult.Data);
-                if (result.Message == ResultType.Success)
-                    return index.DeleteRecord(key);
-                return result;
+                kvpList.Add(new KeyValuePair<string, string>(iterator.CurrentKey, iterator.GetNext().Data));
             }
-            return new Result<string>(Messages.TreeKeyNotFound, ResultType.NotFound);
+
+            result.SetDataWithSuccess(kvpList);
+            return result;
+        }
+        public Result Write(string Key, string Value)
+        {
+            Result result = index.GetBlockNumber(Key);
+            if (result.IsSuccess)
+            {
+                if (result.Data != -1)
+                {
+                    result = storage.UpdateRecord(new Record(Key, Value), result.Data);
+                    if (result.IsSuccess)
+                    {
+                        result = index.UpdateRecord(Key, result.Data);
+                    }
+                }
+                else
+                {
+                    result = storage.WriteRecord(new Record(Key, Value));
+                    if (result.IsSuccess)
+                    {
+                        result = index.AddRecord(Key, result.Data);
+                    }
+                }
+            }
+            return result;
+        }
+        public Result WriteBatch(List<KeyValuePair<string, string>> kvpList)
+        {
+            Result result = new Result();
+            foreach (KeyValuePair<string, string> kvp in kvpList)
+            {
+                result = Write(kvp.Key, kvp.Value);
+                if (!result.IsSuccess)
+                {
+                    return result;
+                }
+            }
+            return result;
+        }
+        public Result Delete(string key)
+        {
+            Result result = index.GetBlockNumber(key);
+            if (result.IsSuccess)
+            {
+                result = storage.DeleteRecord(result.Data);
+                if (result.IsSuccess)
+                {
+                    result = index.DeleteRecord(key);
+                }
+            }
+            return result;
         }
         public Iterator GetIterator()
         {
             return new Iterator(this);
         }
-        public Result<string> Close()
+        public Result Close()
         {
-            var result = WriteTree();
-            if (result.Message == ResultType.Success)
-                return storage.Close();
-            else
-                return result;
-        }
-        private Result<string> WriteTree()
-        {
-            Result<string> result = storage.WriteTree(index.ToString());
+            Result result = WriteTree();
+            if (result.IsSuccess)
+            {
+                result = storage.Close();
+            }
+
             return result;
         }
-        private List<TreeNode> GetNodeList()
-        {
-            return storage.ReadNodes();
-        }
-        public Result<string> ReadTree()
+        public Result ReadTree()
         {
             return storage.ReadTree();
         }
+
     }
 }

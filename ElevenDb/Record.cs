@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 
@@ -23,10 +22,10 @@ namespace ElevenDb
             Value = Encoding.UTF8.GetString(data.Skip(2 * sizeof(int) + keyLength).Take(valueLength).ToArray());
         }
 
-        public Record(string key, string value)
+        public Record(string Key, string Value)
         {
-            Key = key;
-            Value = value;
+            this.Key = Key;
+            this.Value = Value;
         }
         internal byte[] ToByteArray()
         {

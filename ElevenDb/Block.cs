@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace ElevenDb
 {
-    class Block
+    internal class Block
     {
         public byte IsFirst { get; set; }
         public byte IsDeleted { get; set; }
@@ -22,7 +19,7 @@ namespace ElevenDb
             Buffer.BlockCopy(ByteArray, 1, Data, 0, DataSize);
             NextBlock = BitConverter.ToInt32(ByteArray, ByteArray.Length - sizeof(int));
         }
-        public Block(byte IsDeleted,byte IsFirst, byte[] Data,int NextBlock)
+        public Block(byte IsDeleted, byte IsFirst, byte[] Data, int NextBlock)
         {
             this.IsDeleted = IsDeleted;
             this.IsFirst = IsFirst;

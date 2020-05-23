@@ -1,37 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace ElevenDb
 {
     public class Iterator
     {
-        DB Db;
-        List<string> Keys;
-        int counter;
+        private readonly DB db;
+        private readonly List<string> keys;
+        private int counter;
         internal Iterator(DB Db)
         {
-            this.Db = Db;
-            Keys = Db.index.GetKeys();
+            db = Db;
+            keys = Db.index.GetKeys().Data;
             counter = 0;
         }
-        public Result<string> GetNext()
+        public Result GetNext()
         {
-            return Db.Read(Keys[counter++]);
+            return db.Read(keys[counter++]);
         }
-        public bool HasRecord
-        {
-            get
-            {
-                return counter < Keys.Count;
-            }
-        }
-        internal string CurrentKey
-        {
-            get
-            {
-                return Keys[counter];
-            }
-        }
+        public bool HasRecord => counter < keys.Count;
+        internal string CurrentKey => keys[counter];
     }
 }
