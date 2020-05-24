@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ElevenDb
 {
-    class Converter
+    internal class Converter
     {
-        internal static List<Block> ByteArrayToBlockList(byte[] data,int BlockSize)
+        internal static List<Block> ByteArrayToBlockList(byte[] data, int BlockSize)
         {
             int MaxDataSize = BlockSize - 2 - sizeof(int);
             List<Block> blockList = new List<Block>();
@@ -22,7 +23,7 @@ namespace ElevenDb
         }
         internal static Record BlockListToRecord(List<Block> blockList)
         {
-            byte[] data = new byte[0];
+            byte[] data = Array.Empty<byte>();
             foreach (Block block in blockList)
             {
                 data = data.Concat(block.Data).ToArray();

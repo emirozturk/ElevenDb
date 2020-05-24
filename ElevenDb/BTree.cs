@@ -32,14 +32,44 @@ namespace ElevenDb
             RootFirstTraverse(Root, ref treeString);
             return treeString;
         }
-        private string IntegerToString(int Value)
+        private static string IntegerToString(int Value)
         {
             byte[] buffer = BitConverter.GetBytes(Value);
             return new string(buffer.Select(x => Convert.ToChar(x)).ToArray());
         }
-        private int StringToInteger(string Value)
+        private static int StringToInteger(string Value)
         {
             return BitConverter.ToInt32(Value.ToCharArray().Select(x => Convert.ToByte(x)).ToArray());
+        }
+        private static List<TreeNode> StringToNodeList(string treeString)
+        {
+            List<TreeNode> nodeList = new List<TreeNode>();
+            int index = 0;
+            int length;
+            while (index < treeString.Length)
+            {
+                length = StringToInteger(treeString.Substring(index, sizeof(int)));
+                index += sizeof(int);
+
+                string key = treeString.Substring(index, length);
+                index += length;
+
+                int blockNumber = StringToInteger(treeString.Substring(index, sizeof(int)));
+                index += sizeof(int);
+
+                nodeList.Add(new TreeNode(key, blockNumber));
+            }
+            return nodeList;
+        }
+        private static KeyValuePair<string, int> MinValue(TreeNode Current)
+        {
+            KeyValuePair<string, int> min = new KeyValuePair<string, int>(Current.Key, Current.BlockNumber);
+            while (Current.Left != null)
+            {
+                min = new KeyValuePair<string, int>(Current.Left.Key, Current.Left.BlockNumber);
+                Current = Current.Left;
+            }
+            return min;
         }
         private void RootFirstTraverse(TreeNode Current, ref string treeString)
         {
@@ -74,26 +104,7 @@ namespace ElevenDb
                 AddNode(n.Key, n.BlockNumber);
             }
         }
-        private List<TreeNode> StringToNodeList(string treeString)
-        {
-            List<TreeNode> nodeList = new List<TreeNode>();
-            int index = 0;
-            int length;
-            while (index < treeString.Length)
-            {
-                length = StringToInteger(treeString.Substring(index, sizeof(int)));
-                index += sizeof(int);
 
-                string key = treeString.Substring(index, length);
-                index += length;
-
-                int blockNumber = StringToInteger(treeString.Substring(index, sizeof(int)));
-                index += sizeof(int);
-
-                nodeList.Add(new TreeNode(key, blockNumber));
-            }
-            return nodeList;
-        }
         private void Search(ref TreeNode Current, string Key, ref TreeNode Result)
         {
             if (Current == null)
@@ -105,12 +116,12 @@ namespace ElevenDb
             {
                 Result = Current;
             }
-            else if (string.Compare(Key, Current.Key) > 0)
+            else if (string.Compare(Key, Current.Key, StringComparison.Ordinal) > 0)
             {
                 TreeNode right = Current.Right;
                 Search(ref right, Key, ref Result);
             }
-            else if (string.Compare(Key, Current.Key) < 0)
+            else if (string.Compare(Key, Current.Key, StringComparison.Ordinal) < 0)
             {
                 TreeNode left = Current.Left;
                 Search(ref left, Key, ref Result);
@@ -122,7 +133,7 @@ namespace ElevenDb
             {
                 Current = new TreeNode(Key, BlockNumber);
             }
-            else if (string.Compare(Key, Current.Key) > 0)
+            else if (string.Compare(Key, Current.Key, StringComparison.Ordinal) > 0)
             {
                 if (Current.Right == null)
                 {
@@ -134,7 +145,7 @@ namespace ElevenDb
                     Add(ref right, Key, BlockNumber);
                 }
             }
-            else if (string.Compare(Key, Current.Key) < 0)
+            else if (string.Compare(Key, Current.Key, StringComparison.Ordinal) < 0)
             {
                 if (Current.Left == null)
                 {
@@ -154,11 +165,11 @@ namespace ElevenDb
                 return Current;
             }
 
-            if (string.Compare(Key, Current.Key) > 0)
+            if (string.Compare(Key, Current.Key, StringComparison.Ordinal) > 0)
             {
                 Current.Right = Delete(Current.Right, Key);
             }
-            else if (string.Compare(Key, Current.Key) < 0)
+            else if (string.Compare(Key, Current.Key, StringComparison.Ordinal) < 0)
             {
                 Current.Left = Delete(Current.Left, Key);
             }
@@ -173,22 +184,12 @@ namespace ElevenDb
                     return Current.Left;
                 }
 
-                var kv = MinValue(Current.Right);
+                KeyValuePair<string, int> kv = MinValue(Current.Right);
                 Current.Key = kv.Key;
                 Current.BlockNumber = kv.Value;
                 Current.Right = Delete(Current.Right, Current.Key);
             }
             return Current;
-        }
-        private KeyValuePair<string, int> MinValue(TreeNode Current)
-        {
-            KeyValuePair<string, int> min = new KeyValuePair<string, int>(Current.Key, Current.BlockNumber);
-            while (Current.Left != null)
-            {
-                min = new KeyValuePair<string, int>(Current.Left.Key, Current.Left.BlockNumber);
-                Current = Current.Left;
-            }
-            return min;
         }
 
         internal Result GetBlockNumber(string Key)
@@ -212,7 +213,7 @@ namespace ElevenDb
             try
             {
                 Add(ref Root, Key, BlockNumber);
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, string.Format("TreeNode: Key={0} Value={1}", Key, BlockNumber));
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, $"TreeNode: Key={Key} Value={BlockNumber}");
             }
             catch (Exception e)
             {
@@ -228,7 +229,7 @@ namespace ElevenDb
                 TreeNode n = new TreeNode();
                 Search(ref Root, Key, ref n);
                 n.BlockNumber = BlockNumber;
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, string.Format("TreeNode: Key={0} Value={1}", Key, BlockNumber));
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, $"TreeNode: Key={Key} Value={BlockNumber}");
             }
             catch (Exception e)
             {
@@ -242,7 +243,7 @@ namespace ElevenDb
             try
             {
                 Root = Delete(Root, Key);
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, string.Format("TreeNode: Key={0}", Key));
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, $"TreeNode: Key={Key}");
             }
             catch (Exception e)
             {

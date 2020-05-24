@@ -39,7 +39,7 @@ namespace ElevenDb
         }
         public override string ToString()
         {
-            return String.Format("Record: Key={0} Value={1}", Key, Value);
+            return $"Record: Key={Key} Value={Value}";
         }
     }
 }

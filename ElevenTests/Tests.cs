@@ -15,7 +15,7 @@ namespace ElevenTests
         [Test]
         public void WriteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -39,7 +39,7 @@ namespace ElevenTests
         public void MultiWriteTest()
         {
             int testSize = 1000;
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -59,7 +59,7 @@ namespace ElevenTests
         [Test]
         public void OverwriteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -82,7 +82,7 @@ namespace ElevenTests
         [Test]
         public void ReadTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -106,7 +106,7 @@ namespace ElevenTests
         [Test]
         public void MultiReadTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             database.Close();
             if (openResult.IsSuccess)
@@ -126,7 +126,7 @@ namespace ElevenTests
         [Test]
         public void DeleteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -150,7 +150,7 @@ namespace ElevenTests
         [Test]
         public void IterateTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -172,7 +172,7 @@ namespace ElevenTests
         [Test]
         public void ReadAllTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -181,7 +181,7 @@ namespace ElevenTests
                 if (result.IsSuccess)
                 {
                     Console.WriteLine(result.Value.Count);
-                    foreach (var kvp in result.Value)
+                    foreach (KeyValuePair<string, string> kvp in result.Value)
                     {
                         Console.WriteLine(kvp.Key + "-" + kvp.Value);
                     }
@@ -198,7 +198,7 @@ namespace ElevenTests
         public void WriteBatchTest()
         {
             int testSize = 1000;
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -221,8 +221,14 @@ namespace ElevenTests
         {
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
             Result result = database.RepairDb();
-            if (result.IsSuccess) Assert.Pass();
-            else Assert.Fail();
+            if (result.IsSuccess)
+            {
+                Assert.Pass();
+            }
+            else
+            {
+                Assert.Fail();
+            }
         }
     }
 }

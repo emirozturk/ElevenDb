@@ -14,10 +14,12 @@ namespace ElevenDb
         public static string LogPath { set => logPath = Path.Combine(value) + ".log"; }
         public static void LogLines(string Method, Result s)
         {
-            string output = String.Format("{0:d/M/yyyy HH:mm:ss}|{1}|{2}", DateTime.Now, Method.PadRight(40, ' '), s.ToString());
+            string output = $"{DateTime.Now:d/M/yyyy HH:mm:ss}|{Method,40}|{s}";
             lines.Add(output);
             if (!s.IsSuccess)
+            {
                 File.WriteAllText(logPath, Reduce(lines));
+            }
             else if (lines.Count == 250)
             {
                 File.WriteAllText(logPath, Reduce(lines));
@@ -34,8 +36,12 @@ namespace ElevenDb
             string baseString = File.ReadAllText(logPath);
             string newString = string.Join(Environment.NewLine, lines);
             int removeSize = baseString.Length + newString.Length - MaxLogSizeInKb * 1024;
-            if (removeSize < 0) removeSize = 0;
-            return new string(new StringBuilder(baseString).Append(Environment.NewLine).Append(newString).ToString().Skip(removeSize).ToArray());
+            if (removeSize < 0)
+            {
+                removeSize = 0;
+            }
+
+            return new string(new StringBuilder(baseString).Append(Environment.NewLine).Append(newString).ToString().Skip(removeSize - 1).ToArray()) + Environment.NewLine;
         }
     }
 }

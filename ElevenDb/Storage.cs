@@ -13,7 +13,7 @@ namespace ElevenDb
         private static int BlockSize;
         private const int KB = 1024;
         private readonly int MetadataSize = 2; //|flag|blocksize|blocks...|
-        FileStream fs;
+        private FileStream fs;
         internal Storage(string DbPath)
         {
             this.DbPath = DbPath;
@@ -200,7 +200,9 @@ namespace ElevenDb
             Record record = new Record("", "");
             Result result = new Result();
             if (BlockNumber == -1)
+            {
                 result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, record);
+            }
             else
             {
                 result = ReadBlocks(BlockNumber);
@@ -324,17 +326,19 @@ namespace ElevenDb
         {
             Result result = new Result();
             if (BlockNumber == -1)
+            {
                 result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
+            }
             else
             {
                 result = ReadBlocks(BlockNumber);
                 if (result.IsSuccess)
                 {
-                    var blockList = result.Value;
+                    dynamic blockList = result.Value;
                     int blockNumber = BlockNumber;
                     foreach (dynamic block in blockList)
                     {
-                        result = WriteBlock(blockNumber, new Block(1, 0, new byte[0], -1).GetAsByteArray());
+                        result = WriteBlock(blockNumber, new Block(1, 0, Array.Empty<byte>(), -1).GetAsByteArray());
                         blockNumber = block.NextBlock;
                         if (!result.IsSuccess)
                         {
@@ -353,7 +357,10 @@ namespace ElevenDb
         {
             Result result = ReadFileClosedProperlyFlag(DbPath);
             if (result.IsSuccess)
+            {
                 result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, Convert.ToBoolean(result.Value));
+            }
+
             return result;
         }
         internal static Result ReadFileClosedProperlyFlag(string DbPath)
@@ -375,6 +382,5 @@ namespace ElevenDb
             }
             return result;
         }
-
     }
 }
