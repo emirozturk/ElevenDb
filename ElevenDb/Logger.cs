@@ -33,9 +33,9 @@ namespace ElevenDb
         {
             string baseString = File.ReadAllText(logPath);
             string newString = string.Join(Environment.NewLine, lines);
-            int removeSize = baseString.Length+newString.Length - MaxLogSizeInKb * 1024;
+            int removeSize = baseString.Length + newString.Length - MaxLogSizeInKb * 1024;
             if (removeSize < 0) removeSize = 0;
-            return new string(new StringBuilder(baseString).Append(newString).ToString().Skip(removeSize).ToArray());
+            return new string(new StringBuilder(baseString).Append(Environment.NewLine).Append(newString).ToString().Skip(removeSize).ToArray());
         }
     }
 }
