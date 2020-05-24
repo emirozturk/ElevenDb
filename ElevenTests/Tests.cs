@@ -45,7 +45,7 @@ namespace ElevenTests
             {
                 for (int i = 0; i < testSize; i++)
                 {
-                    int rnd = new Random().Next(0, testSize);
+                    int rnd = new Random().Next();
                     Result writeResult = database.Write("Key" + rnd, "Value" + rnd);
                     if (!writeResult.IsSuccess)
                     {
@@ -113,7 +113,7 @@ namespace ElevenTests
             {
                 for (int i = 0; i < 10000; i++)
                 {
-                    Result<string> readResult = database.Read("Key" + new Random().Next(0, 1000));
+                    Result<string> readResult = database.Read("Key" + new Random().Next());
                     if (!readResult.IsSuccess)
                     {
                         Assert.Fail();
@@ -205,7 +205,7 @@ namespace ElevenTests
                 List<KeyValuePair<string, string>> kvpList = new List<KeyValuePair<string, string>>();
                 for (int i = 0; i < testSize; i++)
                 {
-                    int rnd = new Random().Next(0, testSize);
+                    int rnd = new Random().Next();
                     kvpList.Add(new KeyValuePair<string, string>("Key" + rnd, "Value" + rnd));
                 }
                 Result writeResult = database.WriteBatch(kvpList);
