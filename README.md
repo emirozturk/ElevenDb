@@ -5,7 +5,7 @@
 ElevenDb is an extremely-simple key-value database consisting of eleven different components. 
 It is in alpha state, so it is not recommended to use it with valuable data. 
 
-## Features:
+## Features
  - ElevenDb uses native strings for keys and values.
  - An index for keys is created using binary tree.
  - Supported operations are : Read, Write, Delete, ReadAll, WriteBatch and Iterate
