@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="ElevenDb Logo" src="/eleven.png" width="100px" />
+  <img alt="ElevenDb Logo" src="../../eleven.png" width="100px" />
   <h1 align="center">ElevenDb</h1>
 </p>
 ElevenDb is an extremely-simple key-value database consisting of eleven different components. 
