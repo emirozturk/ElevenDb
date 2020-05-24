@@ -1,7 +1,7 @@
 <p align="center">
-	![ElevenDb Logo](Eleven.png)
-<p>
-# ElevenDb
+  <img alt="vscode logo" src="eleven.png" width="100px" />
+  <h1 align="center">ElevenDb</h1>
+</p>
 ElevenDb is an extremely-simple key-value database consisting of eleven different components. 
 It is in alpha state, so it is not recommended to use it with valuable data. 
 
