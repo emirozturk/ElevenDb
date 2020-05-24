@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace ElevenDb
 {
@@ -28,9 +29,9 @@ namespace ElevenDb
                 return string.Empty;
             }
 
-            string treeString = "";
+            StringBuilder treeString = new StringBuilder();
             RootFirstTraverse(Root, ref treeString);
-            return treeString;
+            return treeString.ToString();
         }
         private static string IntegerToString(int Value)
         {
@@ -39,7 +40,7 @@ namespace ElevenDb
         }
         private static int StringToInteger(string Value)
         {
-            return BitConverter.ToInt32(Value.ToCharArray().Select(x => Convert.ToByte(x)).ToArray());
+            return BitConverter.ToInt32(Value.Select(x => Convert.ToByte(x)).ToArray());
         }
         private static List<TreeNode> StringToNodeList(string treeString)
         {
@@ -71,16 +72,16 @@ namespace ElevenDb
             }
             return min;
         }
-        private void RootFirstTraverse(TreeNode Current, ref string treeString)
+        private void RootFirstTraverse(TreeNode Current, ref StringBuilder treeString)
         {
             if (Current == null)
             {
                 return;
             }
 
-            treeString += IntegerToString(Current.Key.Length);
-            treeString += Current.Key;
-            treeString += IntegerToString(Current.BlockNumber);
+            treeString.Append(IntegerToString(Current.Key.Length));
+            treeString.Append(Current.Key);
+            treeString.Append(IntegerToString(Current.BlockNumber));
 
             RootFirstTraverse(Current.Left, ref treeString);
             RootFirstTraverse(Current.Right, ref treeString);
