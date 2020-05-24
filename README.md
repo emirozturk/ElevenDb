@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="ElevenDb Logo" src="github.com/emirozturk/elevendb/eleven.png" width="100px" />
+  <img alt="ElevenDb Logo" src="Eleven.png" width="100px" />
   <h1 align="center">ElevenDb</h1>
 </p>
 ElevenDb is an extremely-simple key-value database consisting of eleven different components. 
@@ -37,7 +37,7 @@ string value = database.Read("key").Value;
 database.Close();
 ```
 
-Each method in db returns results for checking. Read method also returns a Result object, which consists of a message and data. Therefore, you could use methods like below, you could use result.Data (given above), or you could just use ReadKey method  
+Each method in db returns results for checking. Read method also returns a Result object, which consists of a message and data. Therefore, you could use methods like below, you could use result.Data (given above), or you could just use ReadKey method:
 
 ```csharp
 DB database = new DB(path-to-db-file);
