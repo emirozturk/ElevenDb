@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace ElevenDb
 {
@@ -13,27 +14,28 @@ namespace ElevenDb
         public static string LogPath { set => logPath = Path.Combine(value) + ".log"; }
         public static void LogLines(string Method, Result s)
         {
-            string output = String.Format("{0:d/M/yyyy HH:mm:ss} | {1} | {2}", DateTime.Now, Method.PadRight(40, ' '), s.ToString());
+            string output = String.Format("{0:d/M/yyyy HH:mm:ss}|{1}|{2}", DateTime.Now, Method.PadRight(40, ' '), s.ToString());
+            lines.Add(output);
             if (!s.IsSuccess)
+                File.WriteAllText(logPath, Reduce(lines));
+            else if (lines.Count == 250)
             {
-                File.AppendAllLines(logPath, lines);
-                File.AppendAllLines(logPath, new string[1] { output });
-            }
-            else
-                lines.Add(output);
-            if (lines.Count == 250)
-            {
-                File.AppendAllLines(logPath, lines);
+                File.WriteAllText(logPath, Reduce(lines));
                 lines.Clear();
             }
         }
         public static void LogRemaining()
         {
-            File.AppendAllLines(logPath, lines);
-            string log = File.ReadAllText(logPath);
-            int removeSize = log.Length - MaxLogSizeInKb * 1024;
-            log = new string(log.Skip(removeSize).ToArray());
-            File.WriteAllText(logPath,log);
+            File.WriteAllText(logPath, Reduce(lines));
+        }
+
+        private static string Reduce(List<string> lines)
+        {
+            string baseString = File.ReadAllText(logPath);
+            string newString = string.Join(Environment.NewLine, lines);
+            int removeSize = baseString.Length+newString.Length - MaxLogSizeInKb * 1024;
+            if (removeSize < 0) removeSize = 0;
+            return new string(new StringBuilder(baseString).Append(newString).ToString().Skip(removeSize).ToArray());
         }
     }
 }

@@ -212,7 +212,7 @@ namespace ElevenDb
             try
             {
                 Add(ref Root, Key, BlockNumber);
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, String.Format("TreeNode: Key={0} Value={1}", Key, BlockNumber));
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, string.Format("TreeNode: Key={0} Value={1}", Key, BlockNumber));
             }
             catch (Exception e)
             {
@@ -228,7 +228,7 @@ namespace ElevenDb
                 TreeNode n = new TreeNode();
                 Search(ref Root, Key, ref n);
                 n.BlockNumber = BlockNumber;
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, string.Format("TreeNode: Key={0} Value={1}", Key, BlockNumber));
             }
             catch (Exception e)
             {
@@ -242,7 +242,7 @@ namespace ElevenDb
             try
             {
                 Root = Delete(Root, Key);
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, string.Format("TreeNode: Key={0}", Key));
             }
             catch (Exception e)
             {
