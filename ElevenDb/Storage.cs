@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace ElevenDb
 {
@@ -24,18 +25,18 @@ namespace ElevenDb
         {
             return File.Exists(DbPath);
         }
-        internal static Result CreateDb(string DbPath, Options Options)
+        internal static Result CreateDb(string DbPath)
         {
             Result result = new Result();
             try
             {
                 File.Create(DbPath).Close();
                 File.WriteAllBytes(DbPath, new byte[2] { 1, Options.BlockSizeinKb }.ToArray());
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             return result;
         }
@@ -55,11 +56,11 @@ namespace ElevenDb
                     blockList.Add(b);
                     BlockNumber = b.NextBlock;
                 } while (BlockNumber != -1);
-                result.SetDataWithSuccess(blockList);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, blockList);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             finally
             {
@@ -87,11 +88,11 @@ namespace ElevenDb
 
                     blockNumber++;
                 }
-                result.SetDataWithSuccess(initialBlocks);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, initialBlocks);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             finally
             {
@@ -124,11 +125,11 @@ namespace ElevenDb
                     emptyBlocks.Add(blockNumber++);
                 }
 
-                result.SetDataWithSuccess(emptyBlocks);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, emptyBlocks);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             finally
             {
@@ -143,11 +144,11 @@ namespace ElevenDb
             {
                 fs = new FileStream(DbPath, FileMode.Open);
                 fs.Write(new byte[1] { 1 }, 0, 1);
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             finally
             {
@@ -162,11 +163,11 @@ namespace ElevenDb
             {
                 fs = new FileStream(DbPath, FileMode.Open);
                 fs.Write(new byte[1] { 0 }, 0, 1);
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             finally
             {
@@ -182,11 +183,11 @@ namespace ElevenDb
                 fs = new FileStream(DbPath, FileMode.Open);
                 fs.Seek(1, SeekOrigin.Begin);
                 int recordSize = fs.ReadByte();
-                result.SetDataWithSuccess(recordSize);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, recordSize);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             finally
             {
@@ -199,14 +200,14 @@ namespace ElevenDb
             Record record = new Record("", "");
             Result result = new Result();
             if (BlockNumber == -1)
-                result.SetDataWithSuccess(record);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, record);
             else
             {
                 result = ReadBlocks(BlockNumber);
                 if (result.IsSuccess)
                 {
                     record = Converter.BlockListToRecord(result.Value);
-                    result.SetDataWithSuccess(record);
+                    result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, record);
                 }
             }
             return result;
@@ -221,11 +222,11 @@ namespace ElevenDb
                 bw = new BinaryWriter(fs);
                 bw.Seek(MetadataSize + BlockNumber * BlockSize, SeekOrigin.Begin);
                 bw.Write(value);
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             finally
             {
@@ -254,7 +255,7 @@ namespace ElevenDb
                         return result;
                     }
                 }
-                result.SetDataWithSuccess(emptyList[0]);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, emptyList[0]);
             }
             return result;
         }
@@ -277,7 +278,7 @@ namespace ElevenDb
                         return readRecordResult;
                     }
                 }
-                result.SetDataWithSuccess(treeNodes);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, treeNodes);
             }
             return result;
         }
@@ -287,11 +288,11 @@ namespace ElevenDb
             try
             {
                 File.WriteAllText(TreePath, TreeString);
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             return result;
         }
@@ -311,11 +312,11 @@ namespace ElevenDb
             try
             {
                 string treeString = File.ReadAllText(TreePath);
-                result.SetDataWithSuccess(treeString);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, treeString);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             return result;
         }
@@ -323,7 +324,7 @@ namespace ElevenDb
         {
             Result result = new Result();
             if (BlockNumber == -1)
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             else
             {
                 result = ReadBlocks(BlockNumber);
@@ -352,7 +353,7 @@ namespace ElevenDb
         {
             Result result = ReadFileClosedProperlyFlag(DbPath);
             if (result.IsSuccess)
-                result.SetDataWithSuccess(Convert.ToBoolean(result.Value));
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, Convert.ToBoolean(result.Value));
             return result;
         }
         internal static Result ReadFileClosedProperlyFlag(string DbPath)
@@ -362,11 +363,11 @@ namespace ElevenDb
             try
             {
                 int firstByte = fs.ReadByte();
-                result.SetDataWithSuccess(firstByte);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, firstByte);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             finally
             {

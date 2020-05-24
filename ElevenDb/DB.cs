@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace ElevenDb
 {
@@ -15,6 +16,12 @@ namespace ElevenDb
             options = Options.GetDefault();
             Logger.LogPath = dbPath;
         }
+        public DB(string Path, Options Options)
+        {
+            dbPath = Path;
+            options = Options;
+            Logger.LogPath = dbPath;
+        }
         private Result WriteTree()
         {
             return storage.WriteTree(index.ToString());
@@ -22,6 +29,10 @@ namespace ElevenDb
         private Result GetNodeList()
         {
             return storage.ReadAllRecords();
+        }
+        private Result ReadTree()
+        {
+            return storage.ReadTree();
         }
         public Result Open()
         {
@@ -39,27 +50,27 @@ namespace ElevenDb
                     if (result.IsSuccess)
                     {
                         index = new BTree(result.Value);
-                        result.SetDataWithSuccess(null);
+                        result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
                     }
                 }
             }
             else
             {
-                result = Storage.CreateDb(dbPath, options);
+                result = Storage.CreateDb(dbPath);
                 if (result.IsSuccess)
                 {
                     storage = new Storage(dbPath);
                     index = new BTree();
-                    result.SetDataWithSuccess(null);
+                    result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
                 }
             }
             return result;
         }
         public string ReadValue(string key)
         {
-            return Read(key).Value.Value;
+            return Read(key).Value;
         }
-        public Result Read(string Key)
+        public Result<string> Read(string Key)
         {
             Result result = index.GetBlockNumber(Key);
             if (result.IsSuccess)
@@ -67,12 +78,12 @@ namespace ElevenDb
                 result = storage.ReadRecord(result.Value);
                 if (result.IsSuccess)
                 {
-                    result.SetDataWithSuccess(result.Value.Value);
+                    result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, result.Value.Value);
                 }
             }
-            return result;
+            return new Result<string>(result);
         }
-        public Result ReadAll()
+        public Result<KeyValuePair<string,string>> ReadAll()
         {
             Result result = new Result();
             List<KeyValuePair<string, string>> kvpList = new List<KeyValuePair<string, string>>();
@@ -81,9 +92,8 @@ namespace ElevenDb
             {
                 kvpList.Add(new KeyValuePair<string, string>(iterator.CurrentKey, iterator.GetNext().Value));
             }
-
-            result.SetDataWithSuccess(kvpList);
-            return result;
+            result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, kvpList);
+            return new Result<KeyValuePair<string,string>>(result);
         }
         public Result Write(string Key, string Value)
         {
@@ -149,10 +159,6 @@ namespace ElevenDb
 
             return result;
         }
-        public Result ReadTree()
-        {
-            return storage.ReadTree();
-        }
 
         public Result RepairDb()
         {
@@ -168,7 +174,7 @@ namespace ElevenDb
                 result = storage.Close();
             }
             else
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             return result;
         }
     }

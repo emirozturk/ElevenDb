@@ -15,7 +15,7 @@ namespace ElevenTests
         [Test]
         public void WriteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db",new Options(4,true));
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {

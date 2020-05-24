@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
+using System.Reflection;
 
 namespace ElevenDb
 {
@@ -198,11 +198,11 @@ namespace ElevenDb
             {
                 TreeNode node = new TreeNode();
                 Search(ref Root, Key, ref node);
-                result.SetDataWithSuccess(node.BlockNumber);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name,node.BlockNumber);
             }
             catch (Exception e)
             {
-                result.SetMessage(e.Message);
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             return result;
         }
@@ -212,11 +212,11 @@ namespace ElevenDb
             try
             {
                 Add(ref Root, Key, BlockNumber);
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             return result;
         }
@@ -228,11 +228,11 @@ namespace ElevenDb
                 TreeNode n = new TreeNode();
                 Search(ref Root, Key, ref n);
                 n.BlockNumber = BlockNumber;
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             return result;
         }
@@ -242,11 +242,11 @@ namespace ElevenDb
             try
             {
                 Root = Delete(Root, Key);
-                result.SetDataWithSuccess(null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             return result;
         }
@@ -257,11 +257,11 @@ namespace ElevenDb
             {
                 List<string> keyList = new List<string>();
                 GetKeys(Root, ref keyList);
-                result.SetDataWithSuccess(keyList);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, keyList);
             }
             catch (Exception e)
             {
-                result.Message = e.Message;
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, e.Message);
             }
             return result;
         }

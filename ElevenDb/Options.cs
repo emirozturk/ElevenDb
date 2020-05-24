@@ -2,11 +2,12 @@
 {
     public class Options
     {
-        public byte BlockSizeinKb { get; }
-
-        public Options(byte BlockSizeinKb)
+        public static byte BlockSizeinKb { get; internal set; }
+        public static bool IsLoggingActive { get; internal set; }
+        public Options(byte blockSizeinKb, bool isLoggingActive = false)
         {
-            this.BlockSizeinKb = BlockSizeinKb;
+            BlockSizeinKb = blockSizeinKb;
+            IsLoggingActive = isLoggingActive;
         }
 
         internal static Options GetDefault()
