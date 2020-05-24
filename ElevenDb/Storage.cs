@@ -222,7 +222,7 @@ namespace ElevenDb
                 bw = new BinaryWriter(fs);
                 bw.Seek(MetadataSize + BlockNumber * BlockSize, SeekOrigin.Begin);
                 bw.Write(value);
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, BlockNumber);
             }
             catch (Exception e)
             {

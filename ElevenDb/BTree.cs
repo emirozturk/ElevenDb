@@ -18,7 +18,7 @@ namespace ElevenDb
         {
             foreach (TreeNode n in NodeList)
             {
-                AddRecord(n.Key, n.BlockNumber);
+                AddNode(n.Key, n.BlockNumber);
             }
         }
         public override string ToString()
@@ -71,7 +71,7 @@ namespace ElevenDb
             List<TreeNode> nodeList = StringToNodeList(treeString);
             foreach (TreeNode n in nodeList)
             {
-                AddRecord(n.Key, n.BlockNumber);
+                AddNode(n.Key, n.BlockNumber);
             }
         }
         private List<TreeNode> StringToNodeList(string treeString)
@@ -198,7 +198,7 @@ namespace ElevenDb
             {
                 TreeNode node = new TreeNode();
                 Search(ref Root, Key, ref node);
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name,node.BlockNumber);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, node.BlockNumber);
             }
             catch (Exception e)
             {
@@ -206,13 +206,13 @@ namespace ElevenDb
             }
             return result;
         }
-        internal Result AddRecord(string Key, int BlockNumber)
+        internal Result AddNode(string Key, int BlockNumber)
         {
             Result result = new Result();
             try
             {
                 Add(ref Root, Key, BlockNumber);
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, String.Format("TreeNode: Key={0} Value={1}", Key, BlockNumber));
             }
             catch (Exception e)
             {

@@ -13,7 +13,7 @@ namespace ElevenDb
             keys = Db.index.GetKeys().Value;
             counter = 0;
         }
-        public Result GetNext()
+        public Result<string> GetNext()
         {
             return db.Read(keys[counter++]);
         }

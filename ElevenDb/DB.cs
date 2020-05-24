@@ -1,26 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime;
 
 namespace ElevenDb
 {
     public class DB
     {
         private readonly string dbPath;
-        private readonly Options options;
         internal BTree index;
         internal Storage storage;
         public DB(string Path)
         {
             dbPath = Path;
-            options = Options.GetDefault();
             Logger.LogPath = dbPath;
+            Logger.MaxLogSizeInKb = Options.MaxLogSizeInKb;
         }
         public DB(string Path, Options Options)
         {
             dbPath = Path;
-            options = Options;
             Logger.LogPath = dbPath;
+            Logger.MaxLogSizeInKb = Options.MaxLogSizeInKb;
         }
         private Result WriteTree()
         {
@@ -83,7 +83,7 @@ namespace ElevenDb
             }
             return new Result<string>(result);
         }
-        public Result<KeyValuePair<string,string>> ReadAll()
+        public Result<List<KeyValuePair<string, string>>> ReadAll()
         {
             Result result = new Result();
             List<KeyValuePair<string, string>> kvpList = new List<KeyValuePair<string, string>>();
@@ -93,7 +93,7 @@ namespace ElevenDb
                 kvpList.Add(new KeyValuePair<string, string>(iterator.CurrentKey, iterator.GetNext().Value));
             }
             result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, kvpList);
-            return new Result<KeyValuePair<string,string>>(result);
+            return new Result<List<KeyValuePair<string, string>>>(result);
         }
         public Result Write(string Key, string Value)
         {
@@ -113,7 +113,7 @@ namespace ElevenDb
                     result = storage.WriteRecord(new Record(Key, Value));
                     if (result.IsSuccess)
                     {
-                        result = index.AddRecord(Key, result.Value);
+                        result = index.AddNode(Key, result.Value);
                     }
                 }
             }
@@ -155,6 +155,7 @@ namespace ElevenDb
             if (result.IsSuccess)
             {
                 result = storage.Close();
+                if (Options.IsLoggingActive) Logger.LogRemaining();
             }
 
             return result;

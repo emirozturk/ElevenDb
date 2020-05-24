@@ -1,18 +1,18 @@
-﻿namespace ElevenDb
+﻿using System;
+
+namespace ElevenDb
 {
     public class Options
     {
-        public static byte BlockSizeinKb { get; internal set; }
-        public static bool IsLoggingActive { get; internal set; }
-        public Options(byte blockSizeinKb, bool isLoggingActive = false)
-        {
-            BlockSizeinKb = blockSizeinKb;
-            IsLoggingActive = isLoggingActive;
-        }
+        internal static byte BlockSizeinKb { get; set; } = 4;
+        internal static bool IsLoggingActive { get; set; } = false;
+        internal static int MaxLogSizeInKb { get; set; } = 1024;
 
-        internal static Options GetDefault()
+        public Options(byte BlockSizeinKb=4, bool IsLoggingActive = false, int MaxLogSizeInKb = 1024)
         {
-            return new Options(4);
+            Options.BlockSizeinKb = BlockSizeinKb;
+            Options.IsLoggingActive = IsLoggingActive;
+            Options.MaxLogSizeInKb = MaxLogSizeInKb;
         }
     }
 }

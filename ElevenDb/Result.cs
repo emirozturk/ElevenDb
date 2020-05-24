@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Text;
 
 namespace ElevenDb
 {
@@ -11,7 +13,7 @@ namespace ElevenDb
         {
             this.Message = Message;
             if (Options.IsLoggingActive)
-                Logger.LogLine(MethodName, this);
+                Logger.LogLines(MethodName, this);
 
         }
         internal void SetDataWithSuccess(string MethodName, dynamic Value)
@@ -20,11 +22,22 @@ namespace ElevenDb
             IsSuccess = true;
             Message = "Success";
             if (Options.IsLoggingActive)
-                Logger.LogLine(MethodName, this);
+                Logger.LogLines(MethodName, this);
         }
         public override string ToString()
         {
-            return IsSuccess.ToString().PadRight(5) + " - " + Message;
+            StringBuilder output = new StringBuilder();
+            output.Append(IsSuccess.ToString().PadRight(5)+"|");
+            output.Append(Message == null ? "" : Message+"|");
+            if (Value != null)
+            {
+                string valueString = Value.ToString();
+                int length = Math.Min(50, valueString.Length);
+                output.Append(new string(valueString.Take(length).ToArray()));
+                if (length < valueString.Length) 
+                    output.Append("...");
+            }
+            return output.ToString();
         }
         public Result()
         {

@@ -37,5 +37,9 @@ namespace ElevenDb
             .Concat(valueBytes).ToArray();
             return result;
         }
+        public override string ToString()
+        {
+            return String.Format("Record: Key={0} Value={1}", Key, Value);
+        }
     }
 }
