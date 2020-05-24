@@ -15,7 +15,9 @@ namespace ElevenDb
         }
         public Result<string> GetNext()
         {
-            return db.Read(keys[counter++]);
+            if (HasRecord)
+                return db.Read(keys[counter++]);
+            else return new Result<string>(new Result() { Message = "No records left" });
         }
         public bool HasRecord => counter < keys.Count;
         internal string CurrentKey => keys[counter];

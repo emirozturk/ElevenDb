@@ -6,7 +6,7 @@ namespace ElevenDb
 {
     public class Result
     {
-        public string Message { get; private set; }
+        public string Message { get; internal set; }
         public dynamic Value { get; internal set; }
         public bool IsSuccess { get; internal set; }
         internal void SetMessage(string MethodName, string Message)
