@@ -156,6 +156,8 @@ namespace ElevenTests
             Dictionary<string, string> dictionary = new Dictionary<string, string>();
             if (openResult.IsSuccess)
             {
+                List<KeyValuePair<string, string>> allRecords = database.ReadAll().Value;
+                dictionary = new Dictionary<string, string>(allRecords);
                 for (int i = 0; i < testSize; i++)
                 {   
                     //Random insert
