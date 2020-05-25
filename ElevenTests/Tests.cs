@@ -146,8 +146,59 @@ namespace ElevenTests
             {
                 Assert.Fail();
             }
-
         }
+        [Test]
+        public void IntegrityTest()
+        {
+            int testSize = 100;
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            Result openResult = database.Open();
+            Dictionary<string, string> dictionary = new Dictionary<string, string>();
+            if (openResult.IsSuccess)
+            {
+                for (int i = 0; i < testSize; i++)
+                {   
+                    //Random insert
+                    for (int j = 0; j < testSize; j++)
+                    {
+                        int rnd = new Random().Next();
+                        string key = "Key" + rnd;
+                        string value = "Value" + rnd;
+                        if (!dictionary.ContainsKey(key))
+                        {
+                            dictionary.Add(key, value);
+                            database.Write(key, value);
+                        }
+                    }
+                    //Random delete
+                    for (int j = 0; j < testSize/2; j++)
+                    {
+                        int rnd = new Random().Next();
+                        string key = "Key" + rnd;
+                        if(dictionary.ContainsKey(key))
+                        {
+                            dictionary.Remove(key);
+                            database.Delete(key);
+                        }
+                    }
+                }
+            }
+            List<KeyValuePair<string,string>> records = database.ReadAll().Value;
+            database.Close();
+            if (dictionary.Count != records.Count)
+            {
+                Assert.Fail();
+            }
+            foreach(var kvp in records)
+            {
+                dictionary.Remove(kvp.Key);
+            }
+            if (dictionary.Count > 0)
+            {
+                Assert.Fail();
+            }
+        }
+
         [Test]
         public void IterateTest()
         {
