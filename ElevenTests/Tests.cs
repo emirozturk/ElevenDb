@@ -127,7 +127,7 @@ namespace ElevenTests
         [Test]
         public void DeleteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db",new Options(BlockSizeinKb: 1));
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
