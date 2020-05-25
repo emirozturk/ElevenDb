@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 
 namespace ElevenDb
@@ -9,6 +8,7 @@ namespace ElevenDb
         private readonly string dbPath;
         internal BTree index;
         internal Storage storage;
+
         public DB(string Path)
         {
             dbPath = Path;
@@ -45,15 +45,21 @@ namespace ElevenDb
                     if (result.Value)
                     {
                         result = ReadTree();
+                        index = new BTree(result.Value);
                     }
                     else
                     {
                         result = GetNodeList();
+                        if (result.IsSuccess)
+                        {
+                            var nodeList = result.Value; 
+                            result = storage.CreateBlockMap();
+                            index = new BTree(nodeList,result.Value);
+                        }
                     }
 
                     if (result.IsSuccess)
                     {
-                        index = new BTree(result.Value);
                         result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
                     }
                 }
@@ -104,20 +110,31 @@ namespace ElevenDb
             Result result = index.GetBlockNumber(Key);
             if (result.IsSuccess)
             {
+                Record record = new Record(Key, Value);
+                List<int> emptyBlocks; 
                 if (result.Value != -1)
                 {
-                    result = storage.UpdateRecord(new Record(Key, Value), result.Value);
+                    result = storage.DeleteRecord(result.Value);
                     if (result.IsSuccess)
                     {
-                        result = index.UpdateRecord(Key, result.Value);
+                        index.UnSetBlockMap(result.Value);
+                        emptyBlocks = index.GetEmptyBlocks(record.CalculateBlockCount(Options.BlockSizeinKb));
+                        result = storage.WriteRecord(record, emptyBlocks);
+                        if (result.IsSuccess)
+                        {
+                            index.SetBlockMap(result.Value);
+                            result = index.UpdateRecord(Key, result.Value[0]);
+                        }
                     }
                 }
                 else
                 {
-                    result = storage.WriteRecord(new Record(Key, Value));
+                    emptyBlocks = index.GetEmptyBlocks(record.CalculateBlockCount(Options.BlockSizeinKb));
+                    result = storage.WriteRecord(record, emptyBlocks);
                     if (result.IsSuccess)
                     {
-                        result = index.AddNode(Key, result.Value);
+                        index.SetBlockMap(result.Value);
+                        result = index.AddNode(Key, result.Value[0]);
                     }
                 }
             }
@@ -149,8 +166,9 @@ namespace ElevenDb
             if (result.IsSuccess)
             {
                 result = storage.DeleteRecord(result.Value);
-                if (result.IsSuccess)
+                if (result.IsSuccess && result.Value[0] !=-1)
                 {
+                    index.UnSetBlockMap(result.Value);
                     result = index.DeleteRecord(key);
                 }
             }
@@ -185,6 +203,11 @@ namespace ElevenDb
                 if (result.IsSuccess)
                 {
                     index = new BTree(result.Value);
+                    if (result.IsSuccess)
+                    {
+                        List<int> blockMap = storage.CreateBlockMap().Value;
+                        index.CreateMapFromBlockList(blockMap);
+                    }
                 }
                 result = storage.Close();
             }

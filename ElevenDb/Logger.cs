@@ -11,7 +11,7 @@ namespace ElevenDb
         private static readonly List<string> lines = new List<string>();
         private static string logPath;
         public static int MaxLogSizeInKb { get; set; }
-        public static string LogPath { set { logPath = Path.Combine(value) + ".log"; File.Create(logPath).Close(); } }
+        public static string LogPath { set { logPath = Path.Combine(value) + ".log"; if (Options.IsLoggingActive) File.Create(logPath).Close(); } }
         public static void LogLines(string Method, Result s)
         {
             string output = $"{DateTime.Now:d/M/yyyy HH:mm:ss}|{Method,40}|{s}";

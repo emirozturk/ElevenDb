@@ -41,5 +41,12 @@ namespace ElevenDb
         {
             return $"Record: Key={Key} Value={Value}";
         }
+
+        internal int CalculateBlockCount(byte blockSizeInKb)
+        {
+            int byteArraySize = sizeof(int) + Key.Length + sizeof(int) + Value.Length;
+            int dataSize = blockSizeInKb * 1024 - 2 - sizeof(int);
+            return byteArraySize / dataSize + 1;
+        }
     }
 }

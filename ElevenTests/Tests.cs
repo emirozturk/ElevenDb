@@ -19,7 +19,8 @@ namespace ElevenTests
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
-                Result writeResult = database.Write("Key", "Value");
+                int rnd = new Random().Next();
+                Result writeResult = database.Write("Key" + rnd, "Value" + rnd);
                 database.Close();
                 if (writeResult.IsSuccess)
                 {
@@ -130,7 +131,7 @@ namespace ElevenTests
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
-                Result result = database.Delete("Key" + new Random().Next(0, 1000));
+                Result result = database.Delete("Key");// + new Random().Next(0, 1000));
                 database.Close();
                 if (result.IsSuccess)
                 {

@@ -13,6 +13,7 @@ namespace ElevenDb
         private static int BlockSize;
         private const int KB = 1024;
         private readonly int MetadataSize = 2; //|flag|blocksize|blocks...|
+
         private FileStream fs;
         internal Storage(string DbPath)
         {
@@ -85,7 +86,6 @@ namespace ElevenDb
                     {
                         initialBlocks.Add(blockNumber);
                     }
-
                     blockNumber++;
                 }
                 result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, initialBlocks);
@@ -100,32 +100,23 @@ namespace ElevenDb
             }
             return result;
         }
-        private Result FindEmptyBlocks(int count)
+        internal Result CreateBlockMap()
         {
             Result result = new Result();
             try
             {
+                List<int> blocks = new List<int>();
                 fs = new FileStream(DbPath, FileMode.Open);
                 fs.Seek(MetadataSize, SeekOrigin.Begin);
-                List<int> emptyBlocks = new List<int>();
-                int blockNumber = 0;
                 byte[] block = new byte[BlockSize];
-                while (fs.Position < fs.Length && emptyBlocks.Count < count)
+                int blockNumber = 0;
+                while (fs.Position < fs.Length)
                 {
                     fs.Read(block, 0, BlockSize);
-                    if (Convert.ToBoolean(block[0]))
-                    {
-                        emptyBlocks.Add(blockNumber);
-                    }
-
+                    blocks.Add(block[0]);
                     blockNumber++;
                 }
-                while (emptyBlocks.Count < count)
-                {
-                    emptyBlocks.Add(blockNumber++);
-                }
-
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, emptyBlocks);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, blocks);
             }
             catch (Exception e)
             {
@@ -135,6 +126,32 @@ namespace ElevenDb
             {
                 fs.Close();
             }
+            return result;
+        }
+        private Result FindEmptyBlocks(int count)
+        {
+            Result result = new Result();
+            fs.Seek(MetadataSize, SeekOrigin.Begin);
+            List<int> emptyBlocks = new List<int>();
+            int blockNumber = 0;
+            byte[] block = new byte[BlockSize];
+            long length = fs.Length;
+            while (fs.Position < length && emptyBlocks.Count < count)
+            {
+                fs.Read(block, 0, BlockSize);
+                if (Convert.ToBoolean(block[0]))
+                {
+                    emptyBlocks.Add(blockNumber);
+                }
+
+                blockNumber++;
+            }
+            while (emptyBlocks.Count < count)
+            {
+                emptyBlocks.Add(blockNumber++);
+            }
+
+            result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, emptyBlocks);
             return result;
         }
         private Result SetFileClosedProperlyFlag()
@@ -214,17 +231,27 @@ namespace ElevenDb
             }
             return result;
         }
-        internal Result WriteBlock(int BlockNumber, byte[] value)
+        private void WriteBlock(int BlockNumber, byte[] value)
+        {
+            fs.Seek(MetadataSize + BlockNumber * BlockSize, SeekOrigin.Begin);
+            fs.Write(value, 0, value.Length);
+        }
+        internal Result WriteRecord(Record record, List<int> emptyBlocks)
         {
             Result result = new Result();
-            fs = new FileStream(DbPath, FileMode.Open);
-            BinaryWriter bw = new BinaryWriter(fs);
+            List<Block> blockList = Converter.ByteArrayToBlockList(record.ToByteArray(), BlockSize);
             try
             {
-                bw = new BinaryWriter(fs);
-                bw.Seek(MetadataSize + BlockNumber * BlockSize, SeekOrigin.Begin);
-                bw.Write(value);
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, BlockNumber);
+                fs = new FileStream(DbPath, FileMode.Open);
+                for (int i = 0; i < blockList.Count - 1; i++)
+                {
+                    blockList[i].NextBlock = emptyBlocks[i + 1];
+                }
+                for (int i = 0; i < blockList.Count; i++)
+                {
+                    WriteBlock(emptyBlocks[i], blockList[i].GetAsByteArray());
+                }
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, emptyBlocks);
             }
             catch (Exception e)
             {
@@ -232,32 +259,7 @@ namespace ElevenDb
             }
             finally
             {
-                bw.Close();
-            }
-            return result;
-        }
-        internal Result WriteRecord(Record record)
-        {
-            byte[] data = record.ToByteArray();
-            List<Block> blockList = Converter.ByteArrayToBlockList(data, BlockSize);
-            Result result = FindEmptyBlocks(blockList.Count);
-            if (result.IsSuccess)
-            {
-                List<int> emptyList = result.Value;
-                for (int i = 0; i < blockList.Count - 1; i++)
-                {
-                    blockList[i].NextBlock = emptyList[i + 1];
-                }
-
-                for (int i = 0; i < blockList.Count; i++)
-                {
-                    result = WriteBlock(emptyList[i], blockList[i].GetAsByteArray());
-                    if (!result.IsSuccess)
-                    {
-                        return result;
-                    }
-                }
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, emptyList[0]);
+                fs.Close();
             }
             return result;
         }
@@ -298,16 +300,7 @@ namespace ElevenDb
             }
             return result;
         }
-        internal Result UpdateRecord(Record record, int blockNumber)
-        {
-            Result result = DeleteRecord(blockNumber);
-            if (result.IsSuccess)
-            {
-                return WriteRecord(record);
-            }
 
-            return result;
-        }
         internal Result ReadTree()
         {
             Result result = new Result();
@@ -327,23 +320,34 @@ namespace ElevenDb
             Result result = new Result();
             if (BlockNumber == -1)
             {
-                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
+                result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, new int[1] { -1 });
             }
             else
             {
                 result = ReadBlocks(BlockNumber);
                 if (result.IsSuccess)
                 {
-                    dynamic blockList = result.Value;
+                    List<Block> blockList = (List<Block>)result.Value;
+                    List<int> blockNumberList = new List<int>();
                     int blockNumber = BlockNumber;
-                    foreach (dynamic block in blockList)
+                    try
                     {
-                        result = WriteBlock(blockNumber, new Block(1, 0, Array.Empty<byte>(), -1).GetAsByteArray());
-                        blockNumber = block.NextBlock;
-                        if (!result.IsSuccess)
+                        fs = new FileStream(DbPath, FileMode.Open);
+                        foreach (Block block in blockList)
                         {
-                            return result;
+                            blockNumberList.Add(BlockNumber);
+                            WriteBlock(blockNumber, new Block(1, 0, Array.Empty<byte>(), -1).GetAsByteArray());
+                            blockNumber = block.NextBlock;
                         }
+                        result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, blockNumberList);
+                    }
+                    catch (Exception e)
+                    {
+                        result.Message = e.Message;
+                    }
+                    finally
+                    {
+                        fs.Close();
                     }
                 }
             }

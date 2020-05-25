@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Specialized;
 using System.Reflection;
 using System.Text;
 
@@ -9,38 +10,74 @@ namespace ElevenDb
     internal class BTree
     {
         private TreeNode Root;
-        public BTree() { }
+        private BitArray blockMap;
+
+        public BTree()
+        {
+            blockMap = new BitArray(1024);
+        }
         public BTree(string TreeString)
         {
             CreateFromString(TreeString);
         }
 
-        public BTree(List<TreeNode> NodeList)
+        public BTree(List<TreeNode> NodeList,List<int> BlockMap)
         {
             foreach (TreeNode n in NodeList)
             {
                 AddNode(n.Key, n.BlockNumber);
             }
+            CreateMapFromBlockList(BlockMap);
         }
+        private void CreateFromString(string treeString)
+        {
+            int blockMaplength = Converter.StringToInteger(treeString.Substring(0, sizeof(int)));
+            blockMap = Converter.StringToBitArray(treeString.Substring(sizeof(int), blockMaplength));
+            List<TreeNode> nodeList = StringToNodeList(treeString.Substring(blockMaplength + sizeof(int)));
+            foreach (TreeNode n in nodeList)
+            {
+                AddNode(n.Key, n.BlockNumber);
+            }
+        }
+
         public override string ToString()
         {
-            if (Root == null)
-            {
-                return string.Empty;
-            }
+            string blockMapString = Converter.BitArrayToString(blockMap);
+            blockMapString = Converter.IntegerToString(blockMapString.Length) + blockMapString;
 
-            StringBuilder treeString = new StringBuilder();
-            RootFirstTraverse(Root, ref treeString);
-            return treeString.ToString();
+            StringBuilder resultString = new StringBuilder();
+            if (Root != null)
+            {
+                RootFirstTraverse(Root, ref resultString);
+            }
+            return blockMapString + resultString.ToString();
         }
-        private static string IntegerToString(int Value)
+        private void ResizeBlockMap(int number)
         {
-            byte[] buffer = BitConverter.GetBytes(Value);
-            return new string(buffer.Select(x => Convert.ToChar(x)).ToArray());
+            while (blockMap.Length <= number)
+            {
+                blockMap.Length += 1024;
+            }
         }
-        private static int StringToInteger(string Value)
+        internal void SetBlockMap(List<int> BlockList)
         {
-            return BitConverter.ToInt32(Value.Select(x => Convert.ToByte(x)).ToArray());
+            foreach (int number in BlockList)
+            {
+                if (number >= blockMap.Length)
+                {
+                    ResizeBlockMap(number);
+                }
+
+                blockMap[number] = true;
+            }
+        }
+
+        internal void UnSetBlockMap(List<int> BlockList)
+        {
+            foreach (int number in BlockList)
+            {
+                blockMap[number] = false;
+            }
         }
         private static List<TreeNode> StringToNodeList(string treeString)
         {
@@ -49,13 +86,13 @@ namespace ElevenDb
             int length;
             while (index < treeString.Length)
             {
-                length = StringToInteger(treeString.Substring(index, sizeof(int)));
+                length = Converter.StringToInteger(treeString.Substring(index, sizeof(int)));
                 index += sizeof(int);
 
                 string key = treeString.Substring(index, length);
                 index += length;
 
-                int blockNumber = StringToInteger(treeString.Substring(index, sizeof(int)));
+                int blockNumber = Converter.StringToInteger(treeString.Substring(index, sizeof(int)));
                 index += sizeof(int);
 
                 nodeList.Add(new TreeNode(key, blockNumber));
@@ -79,13 +116,36 @@ namespace ElevenDb
                 return;
             }
 
-            treeString.Append(IntegerToString(Current.Key.Length));
+            treeString.Append(Converter.IntegerToString(Current.Key.Length));
             treeString.Append(Current.Key);
-            treeString.Append(IntegerToString(Current.BlockNumber));
+            treeString.Append(Converter.IntegerToString(Current.BlockNumber));
 
             RootFirstTraverse(Current.Left, ref treeString);
             RootFirstTraverse(Current.Right, ref treeString);
         }
+
+        internal List<int> GetEmptyBlocks(int BlockCount)
+        {
+            List<int> emptyBlocks = new List<int>();
+            int blockNumber = 0;
+            int length = blockMap.Length;
+            while (emptyBlocks.Count < BlockCount && blockNumber < length)
+            {
+                if (!blockMap[blockNumber])
+                {
+                    emptyBlocks.Add(blockNumber);
+                }
+
+                blockNumber++;
+            }
+            while (emptyBlocks.Count < BlockCount)
+            {
+                emptyBlocks.Add(blockNumber++);
+            }
+
+            return emptyBlocks;
+        }
+
         private void GetKeys(TreeNode Current, ref List<string> keys)
         {
             if (Current == null)
@@ -96,14 +156,6 @@ namespace ElevenDb
             keys.Add(Current.Key);
             GetKeys(Current.Left, ref keys);
             GetKeys(Current.Right, ref keys);
-        }
-        private void CreateFromString(string treeString)
-        {
-            List<TreeNode> nodeList = StringToNodeList(treeString);
-            foreach (TreeNode n in nodeList)
-            {
-                AddNode(n.Key, n.BlockNumber);
-            }
         }
 
         private void Search(ref TreeNode Current, string Key, ref TreeNode Result)
@@ -128,6 +180,7 @@ namespace ElevenDb
                 Search(ref left, Key, ref Result);
             }
         }
+
         private void Add(ref TreeNode Current, string Key, int BlockNumber)
         {
             if (Current == null)
@@ -159,6 +212,17 @@ namespace ElevenDb
                 }
             }
         }
+
+        internal void CreateMapFromBlockList(List<int> BlockList)
+        {
+            int count = BlockList.Count;
+            int limit = 1024;
+            while (limit < count) limit += 1024;
+            blockMap = new BitArray(limit);
+            for (int i = 0; i < BlockList.Count; i++)
+                blockMap[i] = Convert.ToBoolean(BlockList[i]);
+        }
+
         private TreeNode Delete(TreeNode Current, string Key)
         {
             if (Current == null)
