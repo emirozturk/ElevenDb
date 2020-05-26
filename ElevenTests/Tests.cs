@@ -2,6 +2,7 @@ using ElevenDb;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ElevenTests
 {
@@ -127,7 +128,7 @@ namespace ElevenTests
         [Test]
         public void DeleteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db",new Options(BlockSizeinKb: 1));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(BlockSizeinKb: 1));
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -159,25 +160,29 @@ namespace ElevenTests
                 List<KeyValuePair<string, string>> allRecords = database.ReadAll().Value;
                 dictionary = new Dictionary<string, string>(allRecords);
                 for (int i = 0; i < testSize; i++)
-                {   
+                {
                     //Random insert
                     for (int j = 0; j < testSize; j++)
                     {
                         int rnd = new Random().Next();
                         string key = "Key" + rnd;
-                        string value = "Value" + rnd;
+                        string value = "Value" + string.Join("", Enumerable.Repeat(0, 10 * 1024).Select(n => (char)new Random().Next(65, 90)));
                         if (!dictionary.ContainsKey(key))
                         {
                             dictionary.Add(key, value);
-                            database.Write(key, value);
                         }
+                        else
+                        {
+                            dictionary[key] = value;
+                        }
+                        database.Write(key, value);
                     }
                     //Random delete
-                    for (int j = 0; j < testSize/2; j++)
+                    for (int j = 0; j < testSize / 2; j++)
                     {
                         int rnd = new Random().Next();
                         string key = "Key" + rnd;
-                        if(dictionary.ContainsKey(key))
+                        if (dictionary.ContainsKey(key))
                         {
                             dictionary.Remove(key);
                             database.Delete(key);
@@ -185,13 +190,13 @@ namespace ElevenTests
                     }
                 }
             }
-            List<KeyValuePair<string,string>> records = database.ReadAll().Value;
+            List<KeyValuePair<string, string>> records = database.ReadAll().Value;
             database.Close();
             if (dictionary.Count != records.Count)
             {
                 Assert.Fail();
             }
-            foreach(var kvp in records)
+            foreach (var kvp in records)
             {
                 dictionary.Remove(kvp.Key);
             }
