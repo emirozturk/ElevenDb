@@ -8,12 +8,20 @@ namespace ElevenDb
         private readonly string dbPath;
         internal BTree index;
         internal Storage storage;
-
+        /// <summary>
+        /// Creates an instance of DB class
+        /// </summary>
+        /// <param name="Path">Path of database file</param>
         public DB(string Path)
         {
             dbPath = Path;
             Logger.LogPath = dbPath;
         }
+        /// <summary>
+        /// Creates an instance of DB class
+        /// </summary>
+        /// <param name="Path">Path of database file</param>
+        /// <param name="Options">Database creation options. If db exists, this parameter will be ignored</param>
         public DB(string Path, Options Options)
         {
             dbPath = Path;
@@ -32,6 +40,10 @@ namespace ElevenDb
         {
             return storage.ReadTree();
         }
+        /// <summary>
+        /// Opens or creates db file
+        /// </summary>
+        /// <returns></returns>
         public Result Open()
         {
             Result result;
@@ -76,10 +88,20 @@ namespace ElevenDb
             }
             return result;
         }
+        /// <summary>
+        /// Reads a value of a corresponding key bypassing the result
+        /// </summary>
+        /// <param name="key">Key of value to be retrieved</param>
+        /// <returns>Value of given key as string</returns>
         public string ReadValue(string key)
         {
             return Read(key).Value;
         }
+        /// <summary>
+        /// Reads a value of corresponding key as a result object
+        /// </summary>
+        /// <param name="Key">Key of value to be retrieved</param>
+        /// <returns>Result object containing a string "Value" property</returns>
         public Result<string> Read(string Key)
         {
             Result result = index.GetBlockNumber(Key);
@@ -93,6 +115,10 @@ namespace ElevenDb
             }
             return new Result<string>(result);
         }
+        /// <summary>
+        /// Reads all keys and values from db
+        /// </summary>
+        /// <returns>A List of string key value pairs representing the keys and values</returns>
         public Result<List<KeyValuePair<string, string>>> ReadAll()
         {
             Result result = new Result();
@@ -105,6 +131,12 @@ namespace ElevenDb
             result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, kvpList);
             return new Result<List<KeyValuePair<string, string>>>(result);
         }
+        /// <summary>
+        /// Writes a record to database. If key exists value will be updated.
+        /// </summary>
+        /// <param name="Key">String key of record</param>
+        /// <param name="Value">String value of record</param>
+        /// <returns>A result object containing a message and state of operation</returns>
         public Result Write(string Key, string Value)
         {
             Result result = index.GetBlockNumber(Key);
@@ -140,6 +172,11 @@ namespace ElevenDb
             }
             return result;
         }
+        /// <summary>
+        /// Takes a key value pair list and writes it to db as a batch
+        /// </summary>
+        /// <param name="kvpList">Key value pair to be written to db</param>
+        /// <returns>A result object containing a message and state of operation</returns>
         public Result WriteBatch(List<KeyValuePair<string, string>> kvpList)
         {
             Result result = new Result();
@@ -160,6 +197,11 @@ namespace ElevenDb
             }
             return result;
         }
+        /// <summary>
+        /// Deletes a record corresponding to given key
+        /// </summary>
+        /// <param name="key">Key of record to be deleted</param>
+        /// <returns>A result object containing a message and state of operation</returns>
         public Result Delete(string key)
         {
             Result result = index.GetBlockNumber(key);
@@ -174,10 +216,18 @@ namespace ElevenDb
             }
             return result;
         }
+        /// <summary>
+        /// Returns an Iterator object to iterate through keys
+        /// </summary>
+        /// <returns>An Iterator object</returns>
         public Iterator GetIterator()
         {
             return new Iterator(this);
         }
+        /// <summary>
+        /// Closes db instance and saves the remaining changes
+        /// </summary>
+        /// <returns>A result object containing a message and state of operation</returns>
         public Result Close()
         {
             Result result = WriteTree();
@@ -192,7 +242,10 @@ namespace ElevenDb
 
             return result;
         }
-
+        /// <summary>
+        /// Repair method will create the index and block maps from db file if db is not closed properly
+        /// </summary>
+        /// <returns>A result object containing a message and state of operation</returns>
         public Result RepairDb()
         {
             Result result = new Result();
