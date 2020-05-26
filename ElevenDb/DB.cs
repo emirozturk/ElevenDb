@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace ElevenDb
@@ -270,6 +271,10 @@ namespace ElevenDb
             }
 
             return result;
+        }
+        ~DB()
+        {
+            Close();
         }
     }
 }

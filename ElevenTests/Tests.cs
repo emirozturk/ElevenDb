@@ -289,5 +289,11 @@ namespace ElevenTests
                 Assert.Fail();
             }
         }
+        [Test]
+        public void FinalizeTest()
+        {
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            database.Open();
+        }
     }
 }
