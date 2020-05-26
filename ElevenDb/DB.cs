@@ -9,6 +9,7 @@ namespace ElevenDb
         private readonly string dbPath;
         internal BTree index;
         internal Storage storage;
+        private static Dictionary<string, bool> instanceList;
         /// <summary>
         /// Creates an instance of DB class
         /// </summary>
@@ -17,6 +18,8 @@ namespace ElevenDb
         {
             dbPath = Path;
             Logger.LogPath = dbPath;
+            if (!instanceList.ContainsKey(dbPath))
+                instanceList.Add(dbPath, false);
         }
         /// <summary>
         /// Creates an instance of DB class
@@ -47,46 +50,52 @@ namespace ElevenDb
         /// <returns></returns>
         public Result Open()
         {
-            Result result;
-            if (Storage.DbExists(dbPath))
+            Result result = new Result();
+            if (!instanceList[dbPath])
             {
-                result = Storage.IsFileClosedProperly(dbPath);
-                if (result.IsSuccess)
+                instanceList[dbPath] = true;
+                if (Storage.DbExists(dbPath))
                 {
-                    storage = new Storage(dbPath);
-
-                    if (result.Value)
-                    {
-                        result = ReadTree();
-                        index = new BTree(result.Value);
-                    }
-                    else
-                    {
-                        result = GetNodeList();
-                        if (result.IsSuccess)
-                        {
-                            dynamic nodeList = result.Value;
-                            result = storage.CreateBlockMap();
-                            index = new BTree(nodeList, result.Value);
-                        }
-                    }
-
+                    result = Storage.IsFileClosedProperly(dbPath);
                     if (result.IsSuccess)
                     {
+                        storage = new Storage(dbPath);
+
+                        if (result.Value)
+                        {
+                            result = ReadTree();
+                            index = new BTree(result.Value);
+                        }
+                        else
+                        {
+                            result = GetNodeList();
+                            if (result.IsSuccess)
+                            {
+                                dynamic nodeList = result.Value;
+                                result = storage.CreateBlockMap();
+                                index = new BTree(nodeList, result.Value);
+                            }
+                        }
+
+                        if (result.IsSuccess)
+                        {
+                            result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
+                        }
+                    }
+                }
+                else
+                {
+                    result = Storage.CreateDb(dbPath);
+                    if (result.IsSuccess)
+                    {
+                        storage = new Storage(dbPath);
+                        index = new BTree();
                         result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
                     }
                 }
             }
             else
-            {
-                result = Storage.CreateDb(dbPath);
-                if (result.IsSuccess)
-                {
-                    storage = new Storage(dbPath);
-                    index = new BTree();
-                    result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, null);
-                }
-            }
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, "Another open instance exists");
             return result;
         }
         /// <summary>
@@ -232,15 +241,20 @@ namespace ElevenDb
         public Result Close()
         {
             Result result = WriteTree();
-            if (result.IsSuccess)
+            if (instanceList[dbPath])
             {
-                result = storage.Close();
-                if (Options.IsLoggingActive)
+                if (result.IsSuccess)
                 {
-                    Logger.LogRemaining();
+                    result = storage.Close();
+                    if (Options.IsLoggingActive)
+                    {
+                        Logger.LogRemaining();
+                    }
                 }
+                instanceList[dbPath] = false;
             }
-
+            else
+                result.SetMessage(MethodBase.GetCurrentMethod().Name, "Instance is already closed");
             return result;
         }
         /// <summary>
