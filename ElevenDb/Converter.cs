@@ -45,7 +45,10 @@ namespace ElevenDb
         {
             string output = "";
             foreach (int i in array)
+            {
                 output += IntegerToString(i);
+            }
+
             return output;
         }
         internal static int[] StringToIntegerArray(string Value)
@@ -55,7 +58,7 @@ namespace ElevenDb
             int length = Value.Length / sizeof(int);
             while (index < length)
             {
-                var charList = Value.Skip(index * sizeof(int)).Take(sizeof(int));
+                IEnumerable<char> charList = Value.Skip(index * sizeof(int)).Take(sizeof(int));
                 result.Add(StringToInteger(charList));
                 index++;
             }

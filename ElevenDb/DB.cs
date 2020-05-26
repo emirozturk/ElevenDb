@@ -64,9 +64,9 @@ namespace ElevenDb
                         result = GetNodeList();
                         if (result.IsSuccess)
                         {
-                            var nodeList = result.Value; 
+                            dynamic nodeList = result.Value;
                             result = storage.CreateBlockMap();
-                            index = new BTree(nodeList,result.Value);
+                            index = new BTree(nodeList, result.Value);
                         }
                     }
 
@@ -143,7 +143,7 @@ namespace ElevenDb
             if (result.IsSuccess)
             {
                 Record record = new Record(Key, Value);
-                List<int> emptyBlocks; 
+                List<int> emptyBlocks;
                 if (result.Value != -1)
                 {
                     result = storage.DeleteRecord(result.Value);
@@ -208,7 +208,7 @@ namespace ElevenDb
             if (result.IsSuccess)
             {
                 result = storage.DeleteRecord(result.Value);
-                if (result.IsSuccess && result.Value[0] !=-1)
+                if (result.IsSuccess && result.Value[0] != -1)
                 {
                     index.UnSetBlockMap(result.Value);
                     result = index.DeleteRecord(key);

@@ -13,8 +13,6 @@ namespace ElevenDb
         private static int BlockSize;
         private const int KB = 1024;
         private readonly int MetadataSize = 2; //|flag|blocksize|blocks...|
-
-        private FileStream fs;
         internal Storage(string DbPath)
         {
             this.DbPath = DbPath;
@@ -44,6 +42,7 @@ namespace ElevenDb
         internal Result ReadBlocks(int BlockNumber)
         {
             Result result = new Result();
+            FileStream fs=null;
             try
             {
                 fs = new FileStream(DbPath, FileMode.Open);
@@ -72,6 +71,7 @@ namespace ElevenDb
         private Result ReadInitialBlocks()
         {
             Result result = new Result();
+            FileStream fs = null;
             try
             {
                 List<int> initialBlocks = new List<int>();
@@ -103,6 +103,7 @@ namespace ElevenDb
         internal Result CreateBlockMap()
         {
             Result result = new Result();
+            FileStream fs = null;
             try
             {
                 List<int> blocks = new List<int>();
@@ -131,6 +132,7 @@ namespace ElevenDb
         private Result FindEmptyBlocks(int count)
         {
             Result result = new Result();
+            FileStream fs = null;
             fs.Seek(MetadataSize, SeekOrigin.Begin);
             List<int> emptyBlocks = new List<int>();
             int blockNumber = 0;
@@ -157,6 +159,7 @@ namespace ElevenDb
         private Result SetFileClosedProperlyFlag()
         {
             Result result = new Result();
+            FileStream fs = null;
             try
             {
                 fs = new FileStream(DbPath, FileMode.Open);
@@ -176,6 +179,7 @@ namespace ElevenDb
         internal Result UnsetFileClosedProperlyFlag()
         {
             Result result = new Result();
+            FileStream fs = null;
             try
             {
                 fs = new FileStream(DbPath, FileMode.Open);
@@ -195,6 +199,7 @@ namespace ElevenDb
         private Result ReadBlockSize()
         {
             Result result = new Result();
+            FileStream fs = null;
             try
             {
                 fs = new FileStream(DbPath, FileMode.Open);
@@ -231,7 +236,7 @@ namespace ElevenDb
             }
             return result;
         }
-        private void WriteBlock(int BlockNumber, byte[] value)
+        private void WriteBlock(FileStream fs,int BlockNumber, byte[] value)
         {
             fs.Seek(MetadataSize + BlockNumber * BlockSize, SeekOrigin.Begin);
             fs.Write(value, 0, value.Length);
@@ -240,6 +245,7 @@ namespace ElevenDb
         {
             Result result = new Result();
             List<Block> blockList = Converter.ByteArrayToBlockList(record.ToByteArray(), BlockSize);
+            FileStream fs = null;
             try
             {
                 fs = new FileStream(DbPath, FileMode.Open);
@@ -249,7 +255,7 @@ namespace ElevenDb
                 }
                 for (int i = 0; i < blockList.Count; i++)
                 {
-                    WriteBlock(emptyBlocks[i], blockList[i].GetAsByteArray());
+                    WriteBlock(fs,emptyBlocks[i], blockList[i].GetAsByteArray());
                 }
                 result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, emptyBlocks);
             }
@@ -318,6 +324,7 @@ namespace ElevenDb
         internal Result DeleteRecord(int BlockNumber)
         {
             Result result = new Result();
+            FileStream fs = null;
             if (BlockNumber == -1)
             {
                 result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, new int[1] { -1 });
@@ -336,7 +343,7 @@ namespace ElevenDb
                         foreach (Block block in blockList)
                         {
                             blockNumberList.Add(BlockNumber);
-                            WriteBlock(blockNumber, new Block(1, 0, Array.Empty<byte>(), -1).GetAsByteArray());
+                            WriteBlock(fs,blockNumber, new Block(1, 0, Array.Empty<byte>(), -1).GetAsByteArray());
                             blockNumber = block.NextBlock;
                         }
                         result.SetDataWithSuccess(MethodBase.GetCurrentMethod().Name, blockNumberList);

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Reflection;
 using System.Text;
 
@@ -21,7 +20,7 @@ namespace ElevenDb
             CreateFromString(TreeString);
         }
 
-        public BTree(List<TreeNode> NodeList,List<int> BlockMap)
+        public BTree(List<TreeNode> NodeList, List<int> BlockMap)
         {
             foreach (TreeNode n in NodeList)
             {
@@ -217,10 +216,16 @@ namespace ElevenDb
         {
             int count = BlockList.Count;
             int limit = 1024;
-            while (limit < count) limit += 1024;
+            while (limit < count)
+            {
+                limit += 1024;
+            }
+
             blockMap = new BitArray(limit);
             for (int i = 0; i < BlockList.Count; i++)
+            {
                 blockMap[i] = Convert.ToBoolean(BlockList[i]);
+            }
         }
 
         private TreeNode Delete(TreeNode Current, string Key)

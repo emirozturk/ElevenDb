@@ -196,7 +196,7 @@ namespace ElevenTests
             {
                 Assert.Fail();
             }
-            foreach (var kvp in records)
+            foreach (KeyValuePair<string, string> kvp in records)
             {
                 dictionary.Remove(kvp.Key);
             }
