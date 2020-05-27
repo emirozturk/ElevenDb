@@ -3,7 +3,6 @@
   <h1 align="center">ElevenDb</h1>
 </p>
 ElevenDb is an extremely-simple key-value database consisting of eleven different components. 
-It is in alpha state, so it is not recommended to use it with valuable data. 
 
 ## Features
  - ElevenDb uses native strings for keys and values.
