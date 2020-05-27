@@ -2,7 +2,7 @@
 {
     public class Options
     {
-        internal static byte BlockSizeinKb { get; set; } = 4;
+        internal static byte BlockSizeinKb { get; set; } = 1;
         internal static bool IsLoggingActive { get; set; } = false;
         internal static int MaxLogSizeInKb { get; set; } = 1024;
 
