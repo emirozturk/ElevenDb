@@ -31,6 +31,8 @@ namespace ElevenDb
             dbPath = Path;
             Logger.LogPath = dbPath;
             Logger.MaxLogSizeInKb = Options.MaxLogSizeInKb;
+            if (!instanceList.ContainsKey(dbPath))
+                instanceList.Add(dbPath, false);
         }
         private Result WriteTree()
         {
