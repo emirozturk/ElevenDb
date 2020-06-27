@@ -9,7 +9,7 @@ namespace ElevenDb
         private readonly string dbPath;
         internal BTree index;
         internal Storage storage;
-        private static Dictionary<string, bool> instanceList;
+        private static Dictionary<string, bool> instanceList = new Dictionary<string, bool>();
         /// <summary>
         /// Creates an instance of DB class
         /// </summary>
