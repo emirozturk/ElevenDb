@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <Authors>Emir Öztürk</Authors>
     <Description>ElevenDb is an extremely-simple key-value database consisting of eleven different components. It is in beta state, so it is not recommended to use it with valuable data.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -14,7 +14,7 @@
     <Version>1.0.4</Version>
     <PackageId>Emirozturk.ElevenDb</PackageId>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageReleaseNotes>Fixed some bugs and ported to .Net5</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed some bugs</PackageReleaseNotes>
     <AssemblyVersion>1.0.4.0</AssemblyVersion>
     <FileVersion>1.0.4.0</FileVersion>
   </PropertyGroup>
