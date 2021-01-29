@@ -2,6 +2,7 @@ using ElevenDb;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace ElevenTests
@@ -128,7 +129,7 @@ namespace ElevenTests
         [Test]
         public void DeleteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(BlockSizeinKb: 1));
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -151,7 +152,7 @@ namespace ElevenTests
         [Test]
         public void IntegrityTest()
         {
-            int testSize = 100;
+            int testSize = 10;
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             Result openResult = database.Open();
             Dictionary<string, string> dictionary = new Dictionary<string, string>();
@@ -294,6 +295,91 @@ namespace ElevenTests
         {
             DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
             database.Open();
+        }
+        [Test]
+        public void BigDataTest()
+        {
+            string s = RandomString(20000);
+            string s2 = RandomString(20000);
+            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db",new Options(1,true,102400));
+            database.Open();
+            database.Write("foo", s);
+            database.Write("bar", s2);
+            database.Close();
+            database.Open();
+            var value = database.ReadValue("foo");
+            var value2 = database.ReadValue("bar");
+            if (value == s && value2 == s2) Assert.Pass();
+            else Assert.Fail();
+        }
+        public string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[new Random().Next(s.Length)]).ToArray());
+        }
+
+        [Test]
+        public void StrangeTest()
+        {
+            string ts = "";
+            DB db = new DB(@"C:\Users\emiro\Desktop\Pdb15\Pdb15\bin\Debug\netcoreapp3.1\pdb.db");
+            db.Open();
+
+            string[] files = Directory.GetFiles(@"I:\Archive\PDI");
+            foreach (var file in files)
+            {
+                string[] lines = File.ReadAllLines(file);
+                string value = "";
+                string fileName = "";
+                if (File.Exists(Path.Combine(@"I:\Archive\Converted\", lines[0] + ".mkv")))
+                {
+                    fileName = Path.Combine(@"I:\Archive\Converted\", lines[0] + ".mkv");
+                }
+                else if (File.Exists(Path.Combine(@"I:\Archive\Converted\", lines[0] + ".mp4")))
+                {
+                    fileName = Path.Combine(@"I:\Archive\Converted\", lines[0] + ".mp4");
+                }
+                else if (File.Exists(Path.Combine(@"I:\Archive\Checked\", lines[0] + ".mp4")))
+                {
+                    fileName = Path.Combine(@"I:\Archive\Checked\", lines[0] + ".mp4");
+                }
+                if (fileName == "")
+                {
+                    int a = 5;
+                    if (file.Contains("TagSuggestions"))
+                    {
+                        string output = "";
+                        foreach (var line in lines)
+                        {
+                            output += line + ";";
+                        }
+                        db.Write("tagSuggestions", output);
+                        ts = output;
+                    }
+                    continue;
+                }
+                else
+                {
+                    string two = "";
+                    if (lines[2].Length != 0)
+                        two = lines[2].Substring(0, lines[2].Length - 1);
+                    value = $"{new FileInfo(fileName).Length}:{File.GetCreationTime(fileName).ToShortDateString()}:{two}:{lines[3].Substring(0, lines[3].Length - 1)}:0";
+                }
+                db.Write(lines[0], value);
+            }
+            db.Close();
+            db.Open();
+            db.Write("checkedPath", @"Archive\Checked\");
+            db.Write("convertedPath", @"Archive\Converted\");
+            db.Write("tbcPath", @"Archive\Tbc\");
+
+            db.Close();
+            db.Open();
+            var val = db.ReadValue("tagSuggestions");
+            db.Close();
+            if (val == ts) Assert.Pass();
+            else Assert.Fail();
         }
     }
 }
