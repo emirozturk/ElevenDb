@@ -17,7 +17,7 @@ namespace ElevenTests
         [Test]
         public void WriteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -42,7 +42,7 @@ namespace ElevenTests
         public void MultiWriteTest()
         {
             int testSize = 1000;
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -62,7 +62,7 @@ namespace ElevenTests
         [Test]
         public void OverwriteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -85,7 +85,7 @@ namespace ElevenTests
         [Test]
         public void ReadTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -109,7 +109,7 @@ namespace ElevenTests
         [Test]
         public void MultiReadTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             database.Close();
             if (openResult.IsSuccess)
@@ -129,7 +129,7 @@ namespace ElevenTests
         [Test]
         public void DeleteTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -153,7 +153,7 @@ namespace ElevenTests
         public void IntegrityTest()
         {
             int testSize = 10;
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             Dictionary<string, string> dictionary = new Dictionary<string, string>();
             if (openResult.IsSuccess)
@@ -210,7 +210,7 @@ namespace ElevenTests
         [Test]
         public void IterateTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -232,7 +232,7 @@ namespace ElevenTests
         [Test]
         public void ReadAllTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -258,7 +258,7 @@ namespace ElevenTests
         public void WriteBatchTest()
         {
             int testSize = 1000;
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             Result openResult = database.Open();
             if (openResult.IsSuccess)
             {
@@ -279,7 +279,7 @@ namespace ElevenTests
         }
         public void RepairTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db", new Options(IsLoggingActive: true));
+            DB database = new DB(@"test.db", new Options(IsLoggingActive: true));
             Result result = database.RepairDb();
             if (result.IsSuccess)
             {
@@ -293,7 +293,7 @@ namespace ElevenTests
         [Test]
         public void FinalizeTest()
         {
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db");
+            DB database = new DB(@"test.db");
             database.Open();
         }
         [Test]
@@ -301,7 +301,7 @@ namespace ElevenTests
         {
             string s = RandomString(20000);
             string s2 = RandomString(20000);
-            DB database = new DB(@"C:\Users\emiro\Desktop\Test\test.db",new Options(1,true,102400));
+            DB database = new DB(@"test.db",new Options(1,true,102400));
             database.Open();
             database.Write("foo", s);
             database.Write("bar", s2);
